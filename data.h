@@ -31,7 +31,7 @@ public:
     std::vector<Timer *> getTimers();
     QSound* getAlarm();
 
-    std::string getFormatedTimers(/*std::vector<Timer*> mTimers*/);
+    std::string getFormatedTimers();
 };
 
 #endif // DATA_H

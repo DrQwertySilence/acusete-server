@@ -4,13 +4,9 @@
 #include <sstream>
 #include <string>
 
-#include <chrono>
-#include <ctime>
-
 #include <application.h>
 
-// TODO: Implement here the object creation.
-Data::Data(QObject *pParent):
+Data::Data(QObject *pParent) :
     QObject(pParent),
     mAlarm(new QSound("../share/acusete/sound/alert-short.wav")),
     mServer(new Server(1234, this))
@@ -77,7 +73,7 @@ Data::getTimers()
 }
 
 std::string
-Data::getFormatedTimers(/*std::vector<Timer*> mTimers*/)
+Data::getFormatedTimers()
 {
     std::string formatedTimers;
 

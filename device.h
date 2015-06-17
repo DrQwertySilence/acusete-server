@@ -8,15 +8,15 @@
 class Device
 {
 private:
-    QSerialPort *mSerialPort;
-    QString mPort;
-    QSerialPort::BaudRate mBaudRate;
     std::vector<int> mTempSensors;
+    QString mPort;
+    QSerialPort *mSerialPort;
+    QSerialPort::BaudRate mBaudRate;
+
 public:
     Device(QString pPort, QSerialPort::BaudRate pBaudRate);
     virtual ~Device();
     QSerialPort* getSerialPort();
-    int configure();
 };
 
 #endif // DEVICE_H

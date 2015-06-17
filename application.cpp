@@ -2,20 +2,14 @@
 
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include <string>
-#include <chrono>
-#include <thread>
 
-#include <QProcess>
-
-Application::Application(int &argc, char **argv):
+Application::Application(int &argc, char **argv) :
     QCoreApplication(argc, argv),
     mData(new Data(this)),
     mTimer(new QTimer(this)),
     mAlertTimer(new QTimer(this)),
-    mDelay(100), mFrameCount(0),
-    mMaxFrameCount(3),
+    mDelay(100),
     mDataByteArray(new QByteArray()),
     mMaxArraySize(24)
 {
@@ -24,8 +18,6 @@ Application::Application(int &argc, char **argv):
     mAlertTimer->start(5000);
     QObject::connect(mTimer, &QTimer::timeout,
                      this, &Application::getDataSerial);
-//    QObject::connect(mTimer, &QTimer::timeout,
-//                     this, &Application::printTest);
     QObject::connect(mData->getServer(), &Server::timerReceived,
                      this, &Application::setTimer);
 }
@@ -35,6 +27,7 @@ Application::~Application()
     delete mTimer;
 }
 
+///TODO: Should be implemented to support more that one device.
 void
 Application::getDataSerial()
 {
@@ -67,6 +60,7 @@ Application::isAlerted()
 {
 
 }
+
 
 void
 Application::startAlert()

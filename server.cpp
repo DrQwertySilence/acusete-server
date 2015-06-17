@@ -6,41 +6,37 @@
 
 #include <stdlib.h>
 
-#include <QTimer>
-
 #include "application.h"
 
-Server::Server(int pPort, QObject *pParent):
+Server::Server(int pPort, QObject *pParent) :
     QObject(pParent),
-    mServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this)),
-    mClients()
+    mWebSocketServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this)),
+    mWebSocketClients()
 {
-    if (mServer->listen(QHostAddress::Any, pPort)) {
-        connect(mServer, &QWebSocketServer::newConnection,
+    if (mWebSocketServer->listen(QHostAddress::Any, pPort)) {
+        connect(mWebSocketServer, &QWebSocketServer::newConnection,
                     this, &Server::onNewConnection);
-        connect(mServer, &QWebSocketServer::closed,
+        connect(mWebSocketServer, &QWebSocketServer::closed,
                     this, &Server::closed);
-//        connect(this, &Server::timerReceived,
-//                    (Application*)this->parent()->parent(), &Application::setTimer);
     }
 }
 
 Server::~Server()
 {
-    mServer->close();
-    qDeleteAll(mClients.begin(), mClients.end());
+    mWebSocketServer->close();
+    qDeleteAll(mWebSocketClients.begin(), mWebSocketClients.end());
 }
 
 void
 Server::onNewConnection()
 {
-    QWebSocket *pSocket = mServer->nextPendingConnection();
+    QWebSocket *pSocket = mWebSocketServer->nextPendingConnection();
 
     connect(pSocket, &QWebSocket::textMessageReceived, this, &Server::processTextMessage);
     connect(pSocket, &QWebSocket::binaryMessageReceived, this, &Server::processBinaryMessage);
     connect(pSocket, &QWebSocket::disconnected, this, &Server::socketDisconnected);
 
-    mClients << pSocket;
+    mWebSocketClients << pSocket;
 }
 
 void
@@ -111,7 +107,7 @@ Server::socketDisconnected()
 {
     QWebSocket *client = qobject_cast<QWebSocket *>(sender());
     if (client) {
-        mClients.removeAll(client);
+        mWebSocketClients.removeAll(client);
         client->deleteLater();
     }
 }

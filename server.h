@@ -11,8 +11,8 @@ class Server : public QObject
 {
     Q_OBJECT
 private:
-    QWebSocketServer *mServer;
-    QList<QWebSocket*> mClients;
+    QWebSocketServer *mWebSocketServer;
+    QList<QWebSocket*> mWebSocketClients;
 signals:
     void closed();
     void timerReceived(int pMilliseconds);

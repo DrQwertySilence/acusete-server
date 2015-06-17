@@ -7,9 +7,8 @@
 
 class Timer: public QTimer
 {
-private:
-//    int mTime;
-    Device *mDevice;
+//private:
+//    Device *mDevice;
 public:
     Timer(int pTime, QObject *pParent = nullptr);
     virtual ~Timer();

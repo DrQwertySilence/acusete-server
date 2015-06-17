@@ -1,9 +1,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include <vector>
-#include <sstream>
-
 #include <QCoreApplication>
 #include <QTimer>
 
@@ -16,17 +13,16 @@ private:
 
     QTimer *mTimer;
     QTimer *mAlertTimer;
-
     int mDelay;
-    int mFrameCount;
-    int mMaxFrameCount;
+
     QByteArray *mDataByteArray;
     int mMaxArraySize;
 
 signals:
     void isAlerted();
-public slots:
+private slots:
     void printTest();
+public slots:
     void getDataSerial();
     void startAlert();
     void stopAlert();

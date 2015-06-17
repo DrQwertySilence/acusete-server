@@ -10,7 +10,6 @@ application.cpp \
 data.cpp \
 device.cpp \
 timer.cpp \
-notification.cpp \
 server.cpp
 
 include(deployment.pri)
@@ -20,7 +19,6 @@ HEADERS += \
 application.h \
 data.h \
 device.h \
-notification.h \
 timer.h \
 server.h
 

@@ -1,9 +1,12 @@
 #include "device.h"
 
-Device::Device(QString pPort, QSerialPort::BaudRate pBaudRate) : mPort(pPort), mBaudRate(pBaudRate), mSerialPort(new QSerialPort())
+Device::Device(QString pPort, QSerialPort::BaudRate pBaudRate) :
+    mBaudRate(pBaudRate),
+    mPort(pPort),
+    mSerialPort(new QSerialPort())
 {
-    mSerialPort->setPortName(mPort);
     mSerialPort->setBaudRate(mBaudRate);
+    mSerialPort->setPortName(mPort);
 
     mSerialPort->setDataBits(QSerialPort::DataBits::Data7);
     mSerialPort->setParity(QSerialPort::Parity::EvenParity);
@@ -22,10 +25,4 @@ QSerialPort*
 Device::getSerialPort()
 {
     return mSerialPort;
-}
-
-int
-Device::configure()
-{
-    return 0;
 }

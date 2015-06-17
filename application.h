@@ -35,6 +35,8 @@ public slots:
 public:
     Application(int &argc, char **argv);
     virtual ~Application();
+
+    Data* getData();
 };
 
 #endif // APPLICATION_H

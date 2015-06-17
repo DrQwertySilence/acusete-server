@@ -9,7 +9,6 @@ main.cpp \
 application.cpp \
 data.cpp \
 device.cpp \
-websocket.cpp \
 timer.cpp \
 notification.cpp \
 server.cpp
@@ -21,7 +20,6 @@ HEADERS += \
 application.h \
 data.h \
 device.h \
-websocket.h \
 notification.h \
 timer.h \
 server.h

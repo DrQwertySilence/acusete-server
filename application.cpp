@@ -24,6 +24,8 @@ Application::Application(int &argc, char **argv):
     mAlertTimer->start(5000);
     QObject::connect(mTimer, &QTimer::timeout,
                      this, &Application::getDataSerial);
+//    QObject::connect(mTimer, &QTimer::timeout,
+//                     this, &Application::printTest);
     QObject::connect(mData->getServer(), &Server::timerReceived,
                      this, &Application::setTimer);
 }
@@ -88,4 +90,16 @@ void
 Application::setTimer(int pMilliseconds)
 {
     mData->addTimer(pMilliseconds);
+}
+
+Data*
+Application::getData()
+{
+    return mData;
+}
+
+void
+Application::printTest()
+{
+    std::cout << mData->getTimers().size();
 }

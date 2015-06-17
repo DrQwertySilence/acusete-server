@@ -28,8 +28,10 @@ public:
 
     Server* getServer();
     std::vector<Device*> getDevices();
-    std::vector<Timer> getTimers();
+    std::vector<Timer *> getTimers();
     QSound* getAlarm();
+
+    std::string getFormatedTimers(/*std::vector<Timer*> mTimers*/);
 };
 
 #endif // DATA_H

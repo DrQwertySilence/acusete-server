@@ -20,8 +20,8 @@ Server::Server(int pPort, QObject *pParent):
                     this, &Server::onNewConnection);
         connect(mServer, &QWebSocketServer::closed,
                     this, &Server::closed);
-        connect(this, &Server::timerReceived,
-                    (Application*)this->parent()->parent(), &Application::setTimer);
+//        connect(this, &Server::timerReceived,
+//                    (Application*)this->parent()->parent(), &Application::setTimer);
     }
 }
 
@@ -90,7 +90,9 @@ Server::processTextMessage(QString message)
             }
 
         } else if (words.front() == "/getTimers") {
-            pClient->sendTextMessage("/displayTimers 01,10 02,20 03,30");
+            std::string timers = "/displayTimers ";
+            timers.append(((Data*)this->parent())->getFormatedTimers());
+            pClient->sendTextMessage(timers.c_str()); //"/displayTimers 01:10 02:20 03:30"
         }
     }
 }

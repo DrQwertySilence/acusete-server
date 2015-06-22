@@ -8,7 +8,7 @@ Timer::Timer(int pTime, QObject *pParent) :
     QTimer(pParent)
 {
     connect(this, &Timer::timeout,
-            (Application*)this->parent()->parent(), &Application::startAlert);
+            (Application*)this->parent()->parent(), &Application::startTimerAlert);
 
     this->setSingleShot(true);
     this->start(pTime);

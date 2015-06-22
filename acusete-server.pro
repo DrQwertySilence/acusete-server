@@ -10,7 +10,7 @@ application.cpp \
 data.cpp \
 device.cpp \
 timer.cpp \
-server.cpp
+configuration.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -20,5 +20,5 @@ application.h \
 data.h \
 device.h \
 timer.h \
-server.h
+configuration.h
 

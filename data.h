@@ -10,28 +10,34 @@
 
 #include "timer.h"
 #include "device.h"
-#include "server.h"
+#include "configuration.h"
 
 class Data : public QObject
 {
     Q_OBJECT
 private:
-    QSound *mAlarm;
-    Server *mServer;
-    std::vector<Device*> mDevices;
-    std::vector<Timer*> mTimers;
+    QSound *m_sensorAlarm;
+    QSound *m_timerAlarm;
+//    Server *m_server;
+    Configuration *m_configuration;
+    std::vector<Device*> m_devices;
+    std::vector<Timer*> m_timers;
+
 public:
     Data(QObject *pParant = nullptr);
     virtual ~Data();
 
     void addTimer(int pMilliseconds);
 
-    Server* getServer();
+//    Server* getServer();
     std::vector<Device*> getDevices();
     std::vector<Timer *> getTimers();
-    QSound* getAlarm();
+    QSound* getTimerAlarm();
+    QSound* getSensorAlarm();
 
     std::string getFormatedTimers();
+
+    Configuration* getConfiguration();
 };
 
 #endif // DATA_H

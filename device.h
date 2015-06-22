@@ -8,10 +8,10 @@
 class Device
 {
 private:
-    std::vector<int> mTempSensors;
-    QString mPort;
-    QSerialPort *mSerialPort;
-    QSerialPort::BaudRate mBaudRate;
+    std::vector<int> m_tempSensors;
+    QString m_port;
+    QSerialPort *m_serialPort;
+    QSerialPort::BaudRate m_baudRate;
 
 public:
     Device(QString pPort, QSerialPort::BaudRate pBaudRate);

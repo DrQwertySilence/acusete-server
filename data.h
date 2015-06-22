@@ -18,7 +18,7 @@ class Data : public QObject
 private:
     QSound *m_sensorAlarm;
     QSound *m_timerAlarm;
-//    Server *m_server;
+
     Configuration *m_configuration;
     std::vector<Device*> m_devices;
     std::vector<Timer*> m_timers;
@@ -29,7 +29,6 @@ public:
 
     void addTimer(int pMilliseconds);
 
-//    Server* getServer();
     std::vector<Device*> getDevices();
     std::vector<Timer *> getTimers();
     QSound* getTimerAlarm();

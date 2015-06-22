@@ -80,57 +80,61 @@ Application::getDataSerial()
             sensorData.push_back(word);
         }
         ///
-        m_temperature.clear();
+        m_temperatures.clear();
         for (auto it = sensorData.begin(); it != sensorData.end(); ++it) {
             if (it == sensorData.begin())
                 m_ppm = atoi((*it).c_str());
             else
-                m_temperature.push_back(atof((*it).c_str()));
+                m_temperatures.push_back(atof((*it).c_str()));
         }
         ///
-        std::cout << "Data: " << m_ppm << " " << m_temperature.at(0) << '\n';
+        std::cout << "Data: " << m_ppm << " " << m_temperatures.at(0) << '\n';
         ///Should be configurable
-        if (m_ppm > 400 && m_temperature.at(0) < 35)
-            startSensorAlert();
+        if (m_ppm > 400 && m_temperatures.at(0) < 35)
+            startSensorAlarm();
         else
-            stopSensorAlert();
+            stopSensorAlarm();
         ///
         m_dataByteArray->clear();
     }
 }
 
 void
-Application::startTimerAlert()
+Application::startAlarm(QSound *p_alarm)
 {
-    if(m_data->getTimerAlarm()->isFinished()) {
-        m_data->getTimerAlarm()->play();
-        std::cout << "ALERT, ALERT, ALERT, DANGER, DANGER!!!" << std::endl;
-    }
+    if(p_alarm->isFinished())
+        p_alarm->play();
 }
 
 void
-Application::stopTimerAlert()
+Application::stopAlarm(QSound * p_alarm)
 {
-    if (!m_data->getTimerAlarm()->isFinished()) {
-        m_data->getTimerAlarm()->stop();
-        std::cout << "OK, ALL DONE!!!" << std::endl;
-    }
+    if(!p_alarm->isFinished())
+        p_alarm->stop();
 }
 
 void
-Application::startSensorAlert()
+Application::startTimerAlarm()
 {
-    if(m_data->getSensorAlarm()->isFinished()) {
-        m_data->getSensorAlarm()->play();
-    }
+    startAlarm(m_data->getTimerAlarm());
 }
 
 void
-Application::stopSensorAlert()
+Application::stopTimerAlarm()
 {
-    if (!m_data->getSensorAlarm()->isFinished()) {
-        m_data->getSensorAlarm()->stop();
-    }
+    stopAlarm(m_data->getTimerAlarm());
+}
+
+void
+Application::startSensorAlarm()
+{
+    startAlarm(m_data->getSensorAlarm());
+}
+
+void
+Application::stopSensorAlarm()
+{
+    stopAlarm(m_data->getSensorAlarm());
 }
 
 void
@@ -165,6 +169,7 @@ Application::onNewConnection()
     m_webSocketClients << pSocket;
 }
 
+/// Refactor this shit!!!
 void
 Application::processTextMessage(QString message)
 {
@@ -181,16 +186,18 @@ Application::processTextMessage(QString message)
             words.push_back(word);
         }
 
+        std::string text = "Hello world!";
+
         if (words.front() == "/alert") {
             if (words.size() == 1) {
                 pClient->sendTextMessage("/alert up");
-                startTimerAlert();
+                startTimerAlarm();
             } else if (words.at(1) == "start") {
                 pClient->sendTextMessage("/alert up");
-                startTimerAlert();
+                startTimerAlarm();
             } else if (words.at(1) == "stop") {
                 pClient->sendTextMessage("/alert down");
-                stopTimerAlert();
+                stopTimerAlarm();
             }
 
         } else if (words.front() == "/setTimer") {
@@ -214,7 +221,15 @@ Application::processTextMessage(QString message)
         } else if (words.front() == "/getTimers") {
             std::string timers = "/displayTimers ";
             timers.append(m_data->getFormatedTimers());
-            pClient->sendTextMessage(timers.c_str()); //"/displayTimers 01:10 02:20 03:30"
+            pClient->sendTextMessage(timers.c_str());
+
+        } else if (words.front() == "/getSensorData") {
+            std::string sensorData = "/displaySensorData ";
+            sensorData.append(std::to_string(m_ppm));
+            for (auto temperature : m_temperatures) {
+                sensorData.append(" " + std::to_string(temperature));
+            }
+            pClient->sendTextMessage(sensorData.c_str());
         }
     }
 }

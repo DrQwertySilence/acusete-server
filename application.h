@@ -22,13 +22,13 @@ private:
     QByteArray *m_dataByteArray; // Where data from serial is temporaly stored
     int m_maxArraySize; // Max size of the buffer
 
-    /// Server
+    /// Websocket Server
     QWebSocketServer *m_webSocketServer;
     QList<QWebSocket*> m_webSocketClients;
 
     /// Serial Data
     int m_ppm;
-    std::vector<float> m_temperature;
+    std::vector<float> m_temperatures;
 
 signals:
     void isAlerted();
@@ -44,12 +44,15 @@ private slots:
     void processTextMessage(QString message);
     void processBinaryMessage(QByteArray message);
     void socketDisconnected();
+
+    void startAlarm(QSound *p_alarm);
+    void stopAlarm(QSound *p_alarm);
 public slots:
     void getDataSerial();
-    void startSensorAlert();
-    void stopSensorAlert();
-    void startTimerAlert();
-    void stopTimerAlert();
+    void startSensorAlarm();
+    void stopSensorAlarm();
+    void startTimerAlarm();
+    void stopTimerAlarm();
     void setTimer(int pMilliseconds);
 
 public:

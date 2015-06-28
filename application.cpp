@@ -11,11 +11,8 @@ Application::Application(int &argc, char **argv) :
     m_data(new Data(this)),
     m_serialTimer(new QTimer(this)),
     m_serialTimerDelay(100),
-    m_dataByteArray(new QByteArray()),
-    m_maxArraySize(24),
     /// Server
-    m_webSocketServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this)),
-    m_webSocketClients()
+    m_webSocketServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this))
 {
     m_serialTimer->start(m_serialTimerDelay);
 
@@ -31,71 +28,48 @@ Application::Application(int &argc, char **argv) :
     }
 
     ///Signal and slot stuff
-    QObject::connect(m_serialTimer, &QTimer::timeout,
-                     this, &Application:: getDataSerial);
+    for (Device *device : m_data->getDevices()) {
+        QObject::connect(m_serialTimer, &QTimer::timeout,
+                         device, &Device::getData);
+        QObject::connect(device, &Device::dataReceived,
+                         this, &Application:: printDataSerial);
+    }
+
+//    QObject::connect(m_serialTimer, &QTimer::timeout,
+//                     this, &Application:: getDataSerial);
     QObject::connect(this, &Application::timerReceived,
                      this, &Application::setTimer);
 }
 
 Application::~Application()
 {
+    delete m_data;
     delete m_serialTimer;
 
     ///Server
     m_webSocketServer->close();
+    delete m_webSocketServer;
     qDeleteAll(m_webSocketClients.begin(), m_webSocketClients.end());
 }
 
-/// TODO: Should be implemented to support more that one device.
-/// Advice: pass a device as a parameter :)
+/// TODO: Should be implemented in Device Class
 void
-Application::getDataSerial()
+Application::printDataSerial()
 {
-    (*m_dataByteArray) += m_data->getDevices()[0]->getSerialPort()->readAll();
+    for (Device *device : m_data->getDevices()) {
 
-    if (m_dataByteArray->size() > m_maxArraySize) {
-        std::string stripedData;
-        std::stringstream stream;
-        stream.str(QString(*m_dataByteArray).toStdString());
-
-        int i = 0;
-        while (stream.good() && i <= 1) {
-            if (i == 1) {
-                std::getline(stream, stripedData);
-                break;
-            } else {
-                std::getline(stream, stripedData);
-                ++i;
-            }
+        /// Print data
+        std::cout << "Device: " << device->getId() << " Data: " << device->getPPM();
+        for (float temperature : device->getTemperatures()) {
+            std::cout << " " << temperature;
         }
-        ///
-        std::vector<std::string> sensorData;
-        std::stringstream line;
-        std::string word;
+        std::cout << '\n';
 
-        line.str(stripedData);
-
-        while(line.good()) {
-            std::getline(line, word, ' ');
-            sensorData.push_back(word);
-        }
-        ///
-        m_temperatures.clear();
-        for (auto it = sensorData.begin(); it != sensorData.end(); ++it) {
-            if (it == sensorData.begin())
-                m_ppm = atoi((*it).c_str());
-            else
-                m_temperatures.push_back(atof((*it).c_str()));
-        }
-        ///
-        std::cout << "Data: " << m_ppm << " " << m_temperatures.at(0) << '\n';
-        ///Should be configurable
-        if (m_ppm > 400 && m_temperatures.at(0) < 35)
+        /// Should be configurable
+        if (device->getPPM() > 400 && device->getTemperatures().at(0) < 35)
             startSensorAlarm();
         else
             stopSensorAlarm();
-        ///
-        m_dataByteArray->clear();
     }
 }
 

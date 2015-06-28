@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <iostream>
 
 #include <stdlib.h>
 
@@ -60,6 +61,16 @@ Data::~Data()
 {
     delete m_sensorAlarm;
     delete m_timerAlarm;
+
+    delete m_configuration;
+
+    for (auto *device : m_devices)
+        delete device;
+    m_devices.clear();
+
+    for (auto *timer : m_timers)
+        delete timer;
+    m_timers.clear();
 }
 
 std::vector<Device*>

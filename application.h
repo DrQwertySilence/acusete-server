@@ -19,9 +19,6 @@ private:
     QTimer *m_serialTimer; // Interval of time that the program waits to process received data
     int m_serialTimerDelay;
 
-    QByteArray *m_dataByteArray; // Where data from serial is temporaly stored
-    int m_maxArraySize; // Max size of the buffer
-
     /// Websocket Server
     QWebSocketServer *m_webSocketServer;
     QList<QWebSocket*> m_webSocketClients;
@@ -48,7 +45,7 @@ private slots:
     void startAlarm(QSound *p_alarm);
     void stopAlarm(QSound *p_alarm);
 public slots:
-    void getDataSerial();
+    void printDataSerial();
     void startSensorAlarm();
     void stopSensorAlarm();
     void startTimerAlarm();

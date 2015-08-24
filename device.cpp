@@ -3,13 +3,15 @@
 #include <stdlib.h>
 
 #include <sstream>
+#include <iostream>
 
+#include "database.h"
 
 Device::Device(QString p_port, QSerialPort::BaudRate p_baudRate):
     m_serialPort(new QSerialPort()),
     m_id("Derp"),
     m_dataByteArray(new QByteArray()),
-    m_maxArraySize(24),
+    m_maxArraySize(10),
     m_ppm(0)
 {
     m_serialPort->setBaudRate(p_baudRate);
@@ -52,16 +54,18 @@ Device::getId()
 void
 Device::getData()
 {
-    (*m_dataByteArray).append(m_serialPort->readAll());
-
-    if (m_dataByteArray->size() > m_maxArraySize) {
+    //    (*m_dataByteArray).append(m_serialPort->readAll());
+    int size = m_serialPort->bytesAvailable();
+    if (size >= m_maxArraySize * 3) {
+        m_dataByteArray->append(m_serialPort->read(m_maxArraySize * 3));
+        ///
         std::string stripedData;
         std::stringstream stream;
         stream.str(QString(*m_dataByteArray).toStdString());
 
         int i = 0;
         while (stream.good() && i <= 1) {
-            if (i == 1) {
+            if (i == 2) {
                 std::getline(stream, stripedData);
                 break;
             } else {
@@ -89,7 +93,17 @@ Device::getData()
                 m_temperatures.push_back(atof((*it).c_str()));
         }
         ///
+        m_serialPort->clear();
         m_dataByteArray->clear();
         dataReceived();
+
+        recordAllData();
     }
+}
+
+// SQL stuff
+void
+Device::recordAllData()
+{
+    recordData(QString(m_id.c_str()), m_ppm, m_temperatures);
 }

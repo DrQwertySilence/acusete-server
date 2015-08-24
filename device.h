@@ -8,6 +8,8 @@
 
 #include <QSerialPort>
 
+#include <QSqlQuery>
+
 class Device : public QObject
 {
     Q_OBJECT
@@ -36,6 +38,9 @@ public:
     std::vector<float> getTemperatures();
 
     std::string getId();
+
+    // SQL stuff
+    void recordAllData();
 };
 
 #endif // DEVICE_H

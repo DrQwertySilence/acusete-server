@@ -9,6 +9,24 @@ Configuration::Configuration()
 
 }
 
+std::string
+Configuration::getSensorAlarmPath()
+{
+    return "../share/acusete/sound/alert-short.wav";
+}
+
+std::string
+Configuration::getTimerAlarmPath()
+{
+    return "../share/acusete/sound/alarm2.wav";
+}
+
+std::string
+Configuration::getDeviceListPath()
+{
+    return "../etc/acusete/arduino";
+}
+
 std::vector<std::string>
 Configuration::readFile(std::string pPath)
 {

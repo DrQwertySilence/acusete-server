@@ -27,6 +27,9 @@ private:
     int m_ppm;
     std::vector<float> m_temperatures;
 
+    void processSerialData(std::vector<Device*> p_devices, const int p_maxPPM, const float p_minTemperature);
+    std::string getSerialDataString(std::vector<Device*> p_devices);
+
 signals:
     void isAlerted();
 
@@ -45,7 +48,7 @@ private slots:
     void startAlarm(QSound *p_alarm);
     void stopAlarm(QSound *p_alarm);
 public slots:
-    void printDataSerial();
+    void workOnSerialData();
     void startSensorAlarm();
     void stopSensorAlarm();
     void startTimerAlarm();

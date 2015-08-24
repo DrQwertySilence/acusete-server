@@ -1,27 +1,47 @@
 #include "data.h"
 
+#include <stdlib.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <iostream>
 
-#include <stdlib.h>
-
 #include "application.h"
-
-
 
 Data::Data(QObject *pParent) :
     QObject(pParent),
-    m_sensorAlarm(new QSound("../share/acusete/sound/alert-short.wav")),
-    m_timerAlarm(new QSound("../share/acusete/sound/alarm2.wav"))
+    m_sensorAlarm(new QSound(m_configuration->getSensorAlarmPath().c_str())),
+    m_timerAlarm(new QSound(m_configuration->getTimerAlarmPath().c_str()))
 {
     /// Alarm configuration
     m_sensorAlarm->setLoops(-1);
     m_timerAlarm->setLoops(-1);
 
     ///Serial port and baud rate configuration
-    std::vector<std::string> args = m_configuration->readFile("../share/acusete/devices/arduino");
+    initDevices(m_configuration->getDeviceListPath());
+}
+
+Data::~Data()
+{
+    delete m_sensorAlarm;
+    delete m_timerAlarm;
+
+    delete m_configuration;
+
+    for (auto *device : m_devices)
+        delete device;
+    m_devices.clear();
+
+    for (auto *timer : m_timers)
+        delete timer;
+    m_timers.clear();
+}
+
+void
+Data::initDevices(std::string p_path)
+{
+    std::vector<std::string> args = m_configuration->readFile(p_path);
 
     QSerialPort::BaudRate baudRate;
     int baudRateInt = atoi(args[1].c_str());
@@ -57,22 +77,6 @@ Data::Data(QObject *pParent) :
     m_devices.push_back(new Device(QString(args.at(0).c_str()), baudRate));
 }
 
-Data::~Data()
-{
-    delete m_sensorAlarm;
-    delete m_timerAlarm;
-
-    delete m_configuration;
-
-    for (auto *device : m_devices)
-        delete device;
-    m_devices.clear();
-
-    for (auto *timer : m_timers)
-        delete timer;
-    m_timers.clear();
-}
-
 std::vector<Device*>
 Data::getDevices()
 {
@@ -92,13 +96,16 @@ Data::getSensorAlarm()
 }
 
 void
-Data::addTimer(int pMilliseconds)
+Data::addTimer(int p_milliseconds)
 {
-    Timer *tempTimer = new Timer(pMilliseconds, this);
-    m_timers.push_back(tempTimer);
+    Timer *timer = new Timer(p_milliseconds, this);
+    m_timers.push_back(timer);
+
+    connect(timer, &Timer::remove,
+            this, &Data::removeTimer);
 }
 
-std::vector<Timer *>
+QList<Timer *>
 Data::getTimers()
 {
     return m_timers;
@@ -140,4 +147,11 @@ Data::getFormatedTimers()
 Configuration*
 Data::getConfiguration() {
     return m_configuration;
+}
+
+void
+Data::removeTimer(Timer *p_timer)
+{
+    m_timers.removeOne(p_timer);
+    delete p_timer;
 }

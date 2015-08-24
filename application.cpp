@@ -1,16 +1,18 @@
 #include "application.h"
 
+#include <stdlib.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
 
-#include <stdlib.h>
+#include <QDebug>
 
 Application::Application(int &argc, char **argv) :
     QCoreApplication(argc, argv),
     m_data(new Data(this)),
     m_serialTimer(new QTimer(this)),
-    m_serialTimerDelay(100),
+    m_serialTimerDelay(250),
     /// Server
     m_webSocketServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this))
 {
@@ -21,10 +23,10 @@ Application::Application(int &argc, char **argv) :
     int port = atoi(args[0].c_str());
 
     if (m_webSocketServer->listen(QHostAddress::Any, port)) {
-        connect(m_webSocketServer, &QWebSocketServer::newConnection,
-                this, &Application::onNewConnection);
-        connect(m_webSocketServer, &QWebSocketServer::closed,
-                this, &Application::closed);
+        QObject::connect(m_webSocketServer, &QWebSocketServer::newConnection,
+                         this, &Application::onNewConnection);
+        QObject::connect(m_webSocketServer, &QWebSocketServer::closed,
+                         this, &Application::closed);
     }
 
     ///Signal and slot stuff
@@ -32,11 +34,9 @@ Application::Application(int &argc, char **argv) :
         QObject::connect(m_serialTimer, &QTimer::timeout,
                          device, &Device::getData);
         QObject::connect(device, &Device::dataReceived,
-                         this, &Application:: printDataSerial);
+                         this, &Application:: workOnSerialData);
     }
 
-//    QObject::connect(m_serialTimer, &QTimer::timeout,
-//                     this, &Application:: getDataSerial);
     QObject::connect(this, &Application::timerReceived,
                      this, &Application::setTimer);
 }
@@ -54,23 +54,38 @@ Application::~Application()
 
 /// TODO: Should be implemented in Device Class
 void
-Application::printDataSerial()
+Application::workOnSerialData()
 {
-    for (Device *device : m_data->getDevices()) {
+    processSerialData(m_data->getDevices(), 400, 35);
+//    std::cout << getSerialDataString(m_data->getDevices());
+}
 
-        /// Print data
-        std::cout << "Device: " << device->getId() << " Data: " << device->getPPM();
-        for (float temperature : device->getTemperatures()) {
-            std::cout << " " << temperature;
-        }
-        std::cout << '\n';
-
-        /// Should be configurable
-        if (device->getPPM() > 400 && device->getTemperatures().at(0) < 35)
-            startSensorAlarm();
-        else
+/// Check if there is anormal data. Anormal data is the one that comes from variables PPM and Temperature captures by a device that bypass the maxPPM (more than) and minTemperature (less than) values.
+void
+Application::processSerialData(std::vector<Device*> p_devices, const int p_maxPPM, const float p_minTemperature)
+{
+    for (Device *device : p_devices) {
+        if (device->getPPM() > p_maxPPM) {
+            for (float temperature : device->getTemperatures())
+                if (temperature < p_minTemperature)
+                    startSensorAlarm();
+        } else
             stopSensorAlarm();
     }
+}
+
+std::string
+Application::getSerialDataString(std::vector<Device*> p_devices)
+{
+    std::stringstream string;
+    for (Device *device : p_devices) {
+        string << "Device: " << device->getId() << " Data: " << device->getPPM();
+        for (float temperature : device->getTemperatures()) {
+            string << " " << temperature;
+        }
+        string << '\n';
+    }
+    return string.str();
 }
 
 void
@@ -160,8 +175,6 @@ Application::processTextMessage(QString message)
             words.push_back(word);
         }
 
-        std::string text = "Hello world!";
-
         if (words.front() == "/alert") {
             if (words.size() == 1) {
                 pClient->sendTextMessage("/alert up");
@@ -198,11 +211,14 @@ Application::processTextMessage(QString message)
             pClient->sendTextMessage(timers.c_str());
 
         } else if (words.front() == "/getSensorData") {
+            // Should be multidevice
             std::string sensorData = "/displaySensorData ";
-            sensorData.append(std::to_string(m_ppm));
-            for (auto temperature : m_temperatures) {
+            sensorData.append(std::to_string(m_data->getDevices().at(0)->getPPM()));
+
+            for (auto temperature : m_data->getDevices().at(0)->getTemperatures()) {
                 sensorData.append(" " + std::to_string(temperature));
             }
+
             pClient->sendTextMessage(sensorData.c_str());
         }
     }

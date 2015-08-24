@@ -1,5 +1,5 @@
 TEMPLATE = app
-QT += core serialport websockets multimedia
+QT += core serialport websockets multimedia sql
 QT -= gui
 CONFIG -= app_bundle
 CONFIG += c++11 console
@@ -20,5 +20,6 @@ application.h \
 data.h \
 device.h \
 timer.h \
-configuration.h
+configuration.h \
+    database.h
 

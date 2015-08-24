@@ -9,6 +9,8 @@ Timer::Timer(int pTime, QObject *pParent) :
 {
     connect(this, &Timer::timeout,
             (Application*)this->parent()->parent(), &Application::startTimerAlarm);
+    connect(this, &Timer::timeout,
+            this, &Timer::ontimeout);
 
     this->setSingleShot(true);
     this->start(pTime);
@@ -16,5 +18,11 @@ Timer::Timer(int pTime, QObject *pParent) :
 
 Timer::~Timer()
 {
-    // DON'T DELETE DEVICE
+
+}
+
+void
+Timer::ontimeout()
+{
+    remove(this);
 }

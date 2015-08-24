@@ -21,16 +21,22 @@ private:
 
     Configuration *m_configuration;
     std::vector<Device*> m_devices;
-    std::vector<Timer*> m_timers;
+    QList<Timer*> m_timers;
+//    std::vector<Timer*> m_timers;
+
+    void initDevices(std::string p_path);
+
+private slots:
+    void removeTimer(Timer *p_timer);
 
 public:
     Data(QObject *pParant = nullptr);
     virtual ~Data();
 
-    void addTimer(int pMilliseconds);
+    void addTimer(int p_milliseconds);
 
     std::vector<Device*> getDevices();
-    std::vector<Timer *> getTimers();
+    QList<Timer *> getTimers();
     QSound* getTimerAlarm();
     QSound* getSensorAlarm();
 

@@ -7,8 +7,13 @@
 class Configuration
 {
 public:
-    Configuration();
+    std::string getSensorAlarmPath();
+    std::string getTimerAlarmPath();
+    std::string getDeviceListPath();
+
     std::vector<std::string> readFile(std::string pPath);
+
+    Configuration();
 };
 
 #endif // CONFIGURATION_H

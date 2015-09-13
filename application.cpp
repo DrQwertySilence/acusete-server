@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 #include <iostream>
 #include <sstream>
@@ -57,10 +58,14 @@ void
 Application::workOnSerialData()
 {
     processSerialData(m_data->getDevices(), 400, 35);
-//    std::cout << getSerialDataString(m_data->getDevices());
 }
 
-/// Check if there is anormal data. Anormal data is the one that comes from variables PPM and Temperature captures by a device that bypass the maxPPM (more than) and minTemperature (less than) values.
+/**
+ * @brief Application::processSerialData Check if there is anormal data. Anormal data is the one that comes from variables PPM and Temperature captures by a device that bypass the maxPPM (more than) and minTemperature (less than) values.
+ * @param p_devices
+ * @param p_maxPPM
+ * @param p_minTemperature
+ */
 void
 Application::processSerialData(std::vector<Device*> p_devices, const int p_maxPPM, const float p_minTemperature)
 {
@@ -88,6 +93,10 @@ Application::getSerialDataString(std::vector<Device*> p_devices)
     return string.str();
 }
 
+/**
+ * @brief Application::startAlarm
+ * @param p_alarm The alarm that is going to be started.
+ */
 void
 Application::startAlarm(QSound *p_alarm)
 {
@@ -95,6 +104,10 @@ Application::startAlarm(QSound *p_alarm)
         p_alarm->play();
 }
 
+/**
+ * @brief Application::stopAlarm
+ * @param p_alarm The alarm that is going to be stoped
+ */
 void
 Application::stopAlarm(QSound * p_alarm)
 {
@@ -102,42 +115,65 @@ Application::stopAlarm(QSound * p_alarm)
         p_alarm->stop();
 }
 
+/**
+ * @brief Application::startTimerAlarm Start a timer (soft) alarm
+ */
 void
 Application::startTimerAlarm()
 {
     startAlarm(m_data->getTimerAlarm());
 }
 
+/**
+ * @brief Application::stopTimerAlarm Stop a timer (soft) alarm
+ */
 void
 Application::stopTimerAlarm()
 {
     stopAlarm(m_data->getTimerAlarm());
 }
 
+/**
+ * @brief Application::startSensorAlarm Start a sensor (hard) alarm
+ */
 void
 Application::startSensorAlarm()
 {
     startAlarm(m_data->getSensorAlarm());
 }
 
+/**
+ * @brief Application::stopSensorAlarm Stop a sensor (hard) alarm
+ */
 void
 Application::stopSensorAlarm()
 {
     stopAlarm(m_data->getSensorAlarm());
 }
 
+/**
+ * @brief Application::setTimer creates an alarm in a data object
+ * @param pMilliseconds
+ */
 void
 Application::setTimer(int pMilliseconds)
 {
     m_data->addTimer(pMilliseconds);
 }
 
+/**
+ * @brief Application::getData Getter of data object
+ * @return the data object
+ */
 Data*
 Application::getData()
 {
     return m_data;
 }
 
+/**
+ * @brief Application::printTest TEST FUNCTION: Delete if possible
+ */
 void
 Application::printTest()
 {
@@ -146,6 +182,9 @@ Application::printTest()
 
 ///Websocket Server
 
+/**
+ * @brief Application::onNewConnection Set the events when client interact with the server.
+ */
 void
 Application::onNewConnection()
 {
@@ -159,6 +198,10 @@ Application::onNewConnection()
 }
 
 /// Refactor this shit!!!
+/**
+ * @brief Application::processTextMessage Do something when a client send a message to the server.
+ * @param message The message received.
+ */
 void
 Application::processTextMessage(QString message)
 {
@@ -212,18 +255,29 @@ Application::processTextMessage(QString message)
 
         } else if (words.front() == "/getSensorData") {
             // Should be multidevice
-            std::string sensorData = "/displaySensorData ";
-            sensorData.append(std::to_string(m_data->getDevices().at(0)->getPPM()));
+            std::stringstream sensorData; // Ej: /displaySensorData deviceId 1442107814 144 32...
+
+            sensorData << "/displaySensorData";
+
+            sensorData << " " << m_data->getDevices().at(0)->getId();
+
+            sensorData << " " << time(NULL);
+
+            sensorData << " " << std::to_string(m_data->getDevices().at(0)->getPPM());
 
             for (auto temperature : m_data->getDevices().at(0)->getTemperatures()) {
-                sensorData.append(" " + std::to_string(temperature));
+                sensorData << " " << std::to_string(temperature);
             }
 
-            pClient->sendTextMessage(sensorData.c_str());
+            pClient->sendTextMessage(sensorData.str().c_str());
         }
     }
 }
 
+/**
+ * @brief Application::processBinaryMessage Not used: should be more efficient than working with string
+ * @param message Binary menssage received
+ */
 void
 Application::processBinaryMessage(QByteArray message)
 {

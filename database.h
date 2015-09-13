@@ -46,12 +46,7 @@ std::vector<DeviceRecord> getRecordData(int p_beginDate, int p_endDate)
     if (!database.open()) {
         return std::vector<DeviceRecord>();
     }
-    //  return database.lastError();
-
-    //
     std::vector<DeviceRecord> deviceRecords;
-
-    //
 
     QSqlQuery query = QSqlQuery(database);
 
@@ -83,13 +78,13 @@ std::vector<DeviceRecord> getRecordData(int p_beginDate, int p_endDate)
     return deviceRecords;
 }
 
-QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 &p_ppm)
+QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 p_time, qint64 &p_ppm)
 {
-    time_t seconds;
-    seconds = time(NULL);
+//    time_t seconds;
+//    seconds = time(NULL);
 
     p_query.addBindValue(p_deviceId);
-    p_query.addBindValue(QVariant((int)seconds));
+    p_query.addBindValue(p_time);
     p_query.addBindValue(p_ppm);
     p_query.exec();
     return p_query.lastInsertId();
@@ -110,12 +105,10 @@ QSqlError recordData(QString p_deviceId, qint64 p_ppm, std::vector<float> p_temp
     if (!database.open())
         return database.lastError();
 
-    //
-
     QSqlQuery query = QSqlQuery(database);
 
     query.prepare("insert into datarecord(device, date, ppm) values(?, ?, ?)");
-    QVariant registerId = recordDeviceData(query, p_deviceId, p_ppm);
+    QVariant registerId = recordDeviceData(query, p_deviceId, time(NULL), p_ppm);
 
     query.prepare("insert into temperaturerecord(datarecordId, temperature) values(?, ?)");
     for (auto temperature : p_temperatures) {

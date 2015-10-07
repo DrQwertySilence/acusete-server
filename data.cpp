@@ -125,7 +125,7 @@ Data::getSensorAlarm()
 void
 Data::addTimer(int p_milliseconds)
 {
-    Timer *timer = new Timer(p_milliseconds/*, this*/);
+    Timer *timer = new Timer(p_milliseconds, this);
     m_timers.push_back(timer);
 
     connect(timer, &Timer::removed,

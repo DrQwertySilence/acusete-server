@@ -13,9 +13,6 @@ timer.cpp \
 configuration.cpp \
 database.cpp
 
-include(deployment.pri)
-qtcAddDeployment()
-
 HEADERS += \
 application.h \
 data.h \

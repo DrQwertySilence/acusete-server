@@ -4,29 +4,49 @@
 #include <string>
 #include <fstream>
 
+/**
+ * @brief Configuration::Configuration
+ */
 Configuration::Configuration()
 {
 
 }
 
+/**
+ * @brief Configuration::getSensorAlarmPath
+ * @return
+ */
 std::string
 Configuration::getSensorAlarmPath()
 {
     return "../share/acusete/sound/alert-short.wav";
 }
 
+/**
+ * @brief Configuration::getTimerAlarmPath
+ * @return
+ */
 std::string
 Configuration::getTimerAlarmPath()
 {
     return "../share/acusete/sound/alarm2.wav";
 }
 
+/**
+ * @brief Configuration::getDeviceListPath
+ * @return
+ */
 std::string
 Configuration::getDeviceListPath()
 {
     return "../etc/acusete/arduino";
 }
 
+/**
+ * @brief Configuration::readFile
+ * @param pPath
+ * @return
+ */
 std::vector<std::string>
 Configuration::readFile(std::string pPath)
 {

@@ -9,6 +9,10 @@
 
 #include "application.h"
 
+/**
+ * @brief Data::Data
+ * @param pParent
+ */
 Data::Data(QObject *pParent) :
     QObject(pParent),
     m_sensorAlarm(new QSound(m_configuration->getSensorAlarmPath().c_str())),
@@ -22,6 +26,9 @@ Data::Data(QObject *pParent) :
     initDevices(m_configuration->getDeviceListPath());
 }
 
+/**
+ * @brief Data::~Data
+ */
 Data::~Data()
 {
     delete m_sensorAlarm;
@@ -38,6 +45,10 @@ Data::~Data()
     m_timers.clear();
 }
 
+/**
+ * @brief Data::initDevices
+ * @param p_path
+ */
 void
 Data::initDevices(std::string p_path)
 {
@@ -77,51 +88,89 @@ Data::initDevices(std::string p_path)
     m_devices.push_back(new Device(QString(args.at(0).c_str()), baudRate));
 }
 
+/**
+ * @brief Data::getDevices
+ * @return
+ */
 std::vector<Device*>
 Data::getDevices()
 {
     return m_devices;
 }
 
+/**
+ * @brief Data::getTimerAlarm
+ * @return
+ */
 QSound*
 Data::getTimerAlarm()
 {
     return m_timerAlarm;
 }
 
+/**
+ * @brief Data::getSensorAlarm
+ * @return
+ */
 QSound*
 Data::getSensorAlarm()
 {
     return m_sensorAlarm;
 }
 
+/**
+ * @brief Data::addTimer
+ * @param p_milliseconds
+ */
 void
 Data::addTimer(int p_milliseconds)
 {
-    Timer *timer = new Timer(p_milliseconds, this);
+    Timer *timer = new Timer(p_milliseconds/*, this*/);
     m_timers.push_back(timer);
 
-    connect(timer, &Timer::remove,
+    connect(timer, &Timer::removed,
             this, &Data::removeTimer);
 }
 
+/**
+ * @brief Data::getTimers
+ * @return
+ */
 QList<Timer *>
 Data::getTimers()
 {
     return m_timers;
 }
 
+/**
+ * @brief Data::getTimerById
+ * @param p_id
+ * @return
+ */
+Timer*
+Data::getTimerById(int p_id)
+{
+    for (Timer* timer : m_timers)
+        if (timer->getId() == p_id)
+            return timer;
+    return nullptr;
+}
+
+/**
+ * @brief Data::getFormatedTimers
+ * @return
+ */
 std::string
 Data::getFormatedTimers()
 {
     std::string formatedTimers;
 
-    for (auto timer :this-> m_timers) {
+    for (auto timer : this->m_timers) {
         if (timer != (*m_timers.begin()))
             formatedTimers.append(" ");
-        timer->remainingTime();
+        timer->getRemainingTime();
 
-        int timerRT = timer->remainingTime();
+        int timerRT = timer->getRemainingTime();
 
         int hours = timerRT / (60 * 60 * 1000);
         int minutes = (timerRT - (hours * 60 * 60 * 1000)) / (60 * 1000);
@@ -132,6 +181,9 @@ Data::getFormatedTimers()
         std::string minutesStr = minutes < 10 ? '0' + std::to_string(minutes) : std::to_string(minutes);
         std::string secondsStr = seconds < 10 ? '0' + std::to_string(seconds) : std::to_string(seconds);
 
+        std::string timerIdStr = std::to_string(timer->getId());
+
+        formatedTimers.append(timerIdStr + ";");
         formatedTimers.append(hoursStr +
                               ":" +
                               minutesStr +
@@ -144,11 +196,19 @@ Data::getFormatedTimers()
     return formatedTimers;
 }
 
+/**
+ * @brief Data::getConfiguration
+ * @return
+ */
 Configuration*
 Data::getConfiguration() {
     return m_configuration;
 }
 
+/**
+ * @brief Data::removeTimer
+ * @param p_timer
+ */
 void
 Data::removeTimer(Timer *p_timer)
 {

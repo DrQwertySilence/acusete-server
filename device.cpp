@@ -7,6 +7,11 @@
 
 #include "database.h"
 
+/**
+ * @brief Device::Device
+ * @param p_port
+ * @param p_baudRate
+ */
 Device::Device(QString p_port, QSerialPort::BaudRate p_baudRate):
     m_serialPort(new QSerialPort()),
     m_id("Derp"),
@@ -25,6 +30,9 @@ Device::Device(QString p_port, QSerialPort::BaudRate p_baudRate):
     m_serialPort->open(QIODevice::ReadOnly);
 }
 
+/**
+ * @brief Device::~Device
+ */
 Device::~Device()
 {
     m_serialPort->close();
@@ -33,24 +41,61 @@ Device::~Device()
     delete m_dataByteArray;
 }
 
+/**
+ * @brief Device::getPPM
+ * @return
+ */
 int
 Device::getPPM()
 {
     return m_ppm;
 }
 
+/**
+ * @brief Device::getTemperatures
+ * @return
+ */
 std::vector<float>
 Device::getTemperatures()
 {
     return m_temperatures;
 }
 
+/**
+ * @brief Device::getId
+ * @return
+ */
 std::string
 Device::getId()
 {
     return m_id;
 }
 
+/**
+ * @brief Device::getRecordedData Get all data recorded by this device from a range of dates.
+ * @param p_initialDate
+ * @param p_finalDate
+ * @return The recorded data as a string. Ex: deviceID date:144:32:32:32 date:144:32:32:32...
+ */
+std::string
+Device::getRecordedData(int p_initialDate, int p_finalDate)
+{
+    DeviceRecord deviceRecord = getRegisteredDataByDevice(m_id, p_initialDate, p_finalDate);
+    std::stringstream dataString;
+    dataString << deviceRecord.deviceID;
+    for (RegisteredData registeredData : deviceRecord.registeredData) {
+        dataString << " " << registeredData.date << ":" << registeredData.ppm;
+        for (float temperature : registeredData.temperatures) {
+            dataString << ":" << temperature;
+        }
+    }
+//    std::cout << dataString.str();
+    return dataString.str();
+}
+
+/**
+ * @brief Device::getData
+ */
 void
 Device::getData()
 {
@@ -101,7 +146,9 @@ Device::getData()
     }
 }
 
-// SQL stuff
+/**
+ * @brief Device::recordAllData
+ */
 void
 Device::recordAllData()
 {

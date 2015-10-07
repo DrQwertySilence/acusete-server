@@ -9,6 +9,11 @@
 
 #include <QDebug>
 
+/**
+ * @brief Application::Application
+ * @param argc
+ * @param argv
+ */
 Application::Application(int &argc, char **argv) :
     QCoreApplication(argc, argv),
     m_data(new Data(this)),
@@ -42,6 +47,9 @@ Application::Application(int &argc, char **argv) :
                      this, &Application::setTimer);
 }
 
+/**
+ * @brief Application::~Application
+ */
 Application::~Application()
 {
     delete m_data;
@@ -54,6 +62,9 @@ Application::~Application()
 }
 
 /// TODO: Should be implemented in Device Class
+/**
+ * @brief Application::workOnSerialData
+ */
 void
 Application::workOnSerialData()
 {
@@ -79,6 +90,11 @@ Application::processSerialData(std::vector<Device*> p_devices, const int p_maxPP
     }
 }
 
+/**
+ * @brief Application::getSerialDataString
+ * @param p_devices
+ * @return
+ */
 std::string
 Application::getSerialDataString(std::vector<Device*> p_devices)
 {
@@ -197,21 +213,22 @@ Application::onNewConnection()
     m_webSocketClients << pSocket;
 }
 
+
+
 /// Refactor this shit!!!
 /**
  * @brief Application::processTextMessage Do something when a client send a message to the server.
  * @param message The message received.
  */
 void
-Application::processTextMessage(QString message)
+Application::processTextMessage(QString p_message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     if (pClient) {
-
         std::stringstream stream;
-        stream.str(message.toStdString());
-        std::vector<std::string> words;
+        stream.str(p_message.toStdString());
         std::string word;
+        std::vector<std::string> words;
 
         for (int i = 0; stream.good(); ++i) {
             std::getline(stream, word, ' ');
@@ -254,22 +271,30 @@ Application::processTextMessage(QString message)
             pClient->sendTextMessage(timers.c_str());
 
         } else if (words.front() == "/getSensorData") {
-            // Should be multidevice
-            std::stringstream sensorData; // Ej: /displaySensorData deviceId 1442107814 144 32...
+            std::stringstream sensorData; // Ex: /displaySensorData device1:1442107814:144:32 device2:1442107814:144:32...
 
             sensorData << "/displaySensorData";
 
-            sensorData << " " << m_data->getDevices().at(0)->getId();
-
-            sensorData << " " << time(NULL);
-
-            sensorData << " " << std::to_string(m_data->getDevices().at(0)->getPPM());
-
-            for (auto temperature : m_data->getDevices().at(0)->getTemperatures()) {
-                sensorData << " " << std::to_string(temperature);
+            for (Device *device : m_data->getDevices()) {
+                sensorData << " " << device->getId();
+                sensorData << ":" << time(NULL);
+                sensorData << ":" << std::to_string(device->getPPM());
+                for (auto temperature : device->getTemperatures()) {
+                    sensorData << ":" << std::to_string(temperature);
+                }
             }
 
             pClient->sendTextMessage(sensorData.str().c_str());
+        } else if (words.front() == "/getRecordedData") {
+            // STUB
+            std::string message = std::string();
+            message.append("/recordedDataForGraph ");
+            for (Device *device : m_data->getDevices())
+                if (device->getId() == words.at(1)) {
+                    message.append(device->getRecordedData(atoi(words.at(2).c_str()), atoi(words.at(3).c_str())));
+                    pClient->sendTextMessage(QString(message.c_str()));
+                    break;
+                }
         }
     }
 }
@@ -279,14 +304,17 @@ Application::processTextMessage(QString message)
  * @param message Binary menssage received
  */
 void
-Application::processBinaryMessage(QByteArray message)
+Application::processBinaryMessage(QByteArray p_message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     if (pClient) {
-        pClient->sendBinaryMessage(message);
+        pClient->sendBinaryMessage(p_message);
     }
 }
 
+/**
+ * @brief Application::socketDisconnected
+ */
 void
 Application::socketDisconnected()
 {

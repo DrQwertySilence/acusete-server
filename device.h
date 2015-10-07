@@ -39,6 +39,8 @@ public:
 
     std::string getId();
 
+    std::string getRecordedData(int p_initialDate, int p_finalDate);
+
     // SQL stuff
     void recordAllData();
 };

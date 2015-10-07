@@ -37,6 +37,8 @@ public:
 
     std::vector<Device*> getDevices();
     QList<Timer *> getTimers();
+    Timer* getTimerById(int p_id);
+
     QSound* getTimerAlarm();
     QSound* getSensorAlarm();
 

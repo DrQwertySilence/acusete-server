@@ -3,8 +3,8 @@
 
 #include <QCoreApplication>
 #include <QTimer>
-#include <QtCore/QList>
-#include <QtCore/QByteArray>
+#include <QList>
+#include <QByteArray>
 #include <QWebSocket>
 #include <QWebSocketServer>
 
@@ -24,18 +24,15 @@ private:
     QList<QWebSocket*> m_webSocketClients;
 
     /// Serial Data
-    void processSerialData(std::vector<Device*> p_devices, const int p_maxPPM, const float p_minTemperature);
-    std::string getSerialDataString(std::vector<Device*> p_devices);
+    void processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p_minTemperature);
+    QString getSerialDataString(QVector<Device*> p_devices);
 
 signals:
     void isAlerted();
-
     ///Server
     void closed();
     void timerReceived(int pMilliseconds);
 private slots:
-    void printTest();
-
     ///Server
     void onNewConnection();
     void processTextMessage(QString message);

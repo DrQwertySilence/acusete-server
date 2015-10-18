@@ -1,13 +1,9 @@
 #include "data.h"
 
-#include <stdlib.h>
-
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <iostream>
-
 #include "application.h"
+#include "database.h"
+
+#include <QJsonObject>
 
 /**
  * @brief Data::Data
@@ -15,8 +11,8 @@
  */
 Data::Data(QObject *pParent) :
     QObject(pParent),
-    m_sensorAlarm(new QSound(m_configuration->getSensorAlarmPath().c_str())),
-    m_timerAlarm(new QSound(m_configuration->getTimerAlarmPath().c_str()))
+    m_sensorAlarm(new QSound(m_configuration->getSensorAlarmPath().toUtf8().data())),
+    m_timerAlarm(new QSound(m_configuration->getTimerAlarmPath().toUtf8().data()))
 {
     /// Alarm configuration
     m_sensorAlarm->setLoops(-1);
@@ -36,8 +32,12 @@ Data::~Data()
 
     delete m_configuration;
 
-    for (auto *device : m_devices)
-        delete device;
+    for (QVector<Device*>::Iterator it = m_devices.begin(); it != m_devices.end(); ++it) {
+        delete *it;
+    }
+
+//    for (auto *device : m_devices)
+//        delete device;
     m_devices.clear();
 
     for (auto *timer : m_timers)
@@ -50,12 +50,12 @@ Data::~Data()
  * @param p_path
  */
 void
-Data::initDevices(std::string p_path)
+Data::initDevices(QString p_path)
 {
-    std::vector<std::string> args = m_configuration->readFile(p_path);
+    QJsonObject args = m_configuration->readFile(p_path);
 
     QSerialPort::BaudRate baudRate;
-    int baudRateInt = atoi(args[1].c_str());
+    int baudRateInt = args.value("baudRate").toInt();
     switch (baudRateInt) {
     case 1200:
         baudRate = QSerialPort::BaudRate::Baud1200;
@@ -85,14 +85,14 @@ Data::initDevices(std::string p_path)
         baudRate = QSerialPort::BaudRate::UnknownBaud;
     }
 
-    m_devices.push_back(new Device(QString(args.at(0).c_str()), baudRate));
+    m_devices.push_back(new Device(args.value("port").toString(), baudRate));
 }
 
 /**
  * @brief Data::getDevices
  * @return
  */
-std::vector<Device*>
+QVector<Device*>
 Data::getDevices()
 {
     return m_devices;
@@ -157,43 +157,116 @@ Data::getTimerById(int p_id)
 }
 
 /**
- * @brief Data::getFormatedTimers
- * @return
+ * @brief Data::destroyTimerById
+ * @param p_id
  */
-std::string
+void
+Data::destroyTimerById(int p_id)
+{
+    int count = m_timers.count();
+    for (int i = 0; i < count; ++i)
+        if (m_timers[i]->getId() == p_id) {
+            delete m_timers[i];
+            m_timers.removeAt(i);
+        }
+}
+
+///**
+// * @brief Data::getFormatedTimers
+// * @return
+// */
+//std::string
+//Data::getFormatedTimers()
+//{
+//    std::string formatedTimers;
+
+//    for (auto timer : this->m_timers) {
+//        if (timer != (*m_timers.begin()))
+//            formatedTimers.append(" ");
+//        timer->getRemainingTime();
+
+//        int timerRT = timer->getRemainingTime();
+
+//        int hours = timerRT / (60 * 60 * 1000);
+//        int minutes = (timerRT - (hours * 60 * 60 * 1000)) / (60 * 1000);
+//        int seconds = (timerRT - (minutes * 60 * 1000) -  (hours * 60 * 60 * 1000)) / 1000;
+////        int milliseconds = timerRT - (seconds * 1000) - (minutes * 1000 * 60) - (hours * 60 * 60 * 1000);
+
+//        std::string hoursStr = hours < 10 ? '0' + std::to_string(hours) : std::to_string(hours);
+//        std::string minutesStr = minutes < 10 ? '0' + std::to_string(minutes) : std::to_string(minutes);
+//        std::string secondsStr = seconds < 10 ? '0' + std::to_string(seconds) : std::to_string(seconds);
+
+//        std::string timerIdStr = std::to_string(timer->getId());
+
+//        formatedTimers.append(timerIdStr + ";");
+//        formatedTimers.append(hoursStr +
+//                              ":" +
+//                              minutesStr +
+//                              ":" +
+//                              secondsStr);/* +
+//                              ":" +
+//                              std::to_string(milliseconds));*/
+//    }
+
+//    return formatedTimers;
+//}
+
+QJsonArray
 Data::getFormatedTimers()
 {
-    std::string formatedTimers;
-
+    QJsonArray timers;
     for (auto timer : this->m_timers) {
-        if (timer != (*m_timers.begin()))
-            formatedTimers.append(" ");
-        timer->getRemainingTime();
-
-        int timerRT = timer->getRemainingTime();
-
-        int hours = timerRT / (60 * 60 * 1000);
-        int minutes = (timerRT - (hours * 60 * 60 * 1000)) / (60 * 1000);
-        int seconds = (timerRT - (minutes * 60 * 1000) -  (hours * 60 * 60 * 1000)) / 1000;
-//        int milliseconds = timerRT - (seconds * 1000) - (minutes * 1000 * 60) - (hours * 60 * 60 * 1000);
-
-        std::string hoursStr = hours < 10 ? '0' + std::to_string(hours) : std::to_string(hours);
-        std::string minutesStr = minutes < 10 ? '0' + std::to_string(minutes) : std::to_string(minutes);
-        std::string secondsStr = seconds < 10 ? '0' + std::to_string(seconds) : std::to_string(seconds);
-
-        std::string timerIdStr = std::to_string(timer->getId());
-
-        formatedTimers.append(timerIdStr + ";");
-        formatedTimers.append(hoursStr +
-                              ":" +
-                              minutesStr +
-                              ":" +
-                              secondsStr);/* +
-                              ":" +
-                              std::to_string(milliseconds));*/
+        QJsonObject jsonTimer {
+            {"ID", timer->getId()},
+            {"remainingTime", (timer->getRemainingTime() / 1000)}
+        };
+        timers.append(jsonTimer);
     }
+    return timers;
+}
 
-    return formatedTimers;
+/**
+ * @brief Data::getFormatedDeviceData
+ * @return
+ */
+QJsonArray
+Data::getFormatedDeviceData()
+{
+    QJsonArray devicesData;
+    for (Device *device : m_devices) {
+        QJsonArray temperatures;
+
+        for (auto temperature : device->getTemperatures()) {
+            temperatures.append(temperature);
+        }
+
+        int seconds = time(NULL);
+        QJsonObject jsonDevice {
+            {"id", device->getId()},
+            {"time", seconds},
+            {"ppm", device->getPPM()},
+            {"temperatures", temperatures}
+        };
+
+        devicesData.append(jsonDevice);
+    }
+    return devicesData;
+}
+
+/**
+ * @brief Device::getRecordedData
+ * @param p_initialDate
+ * @param p_finalDate
+ * @return
+ */
+QJsonArray
+Data::getRecordedData(int p_initialDate, int p_finalDate)
+{
+    QJsonArray devicesRecord;
+    for (Device *device : m_devices) {
+        devicesRecord.append(getRegisteredDataByDevice_2(device->getId(), p_initialDate, p_finalDate));
+    }
+    return devicesRecord;
 }
 
 /**

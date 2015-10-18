@@ -34,7 +34,8 @@ const QString getDatabaseName()
  * @param p_finalDate
  * @return
  */
-DeviceRecord getRegisteredDataByDevice(std::string p_deviceID, int p_initialDate, int p_finalDate)
+DeviceRecord
+getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate)
 {
     QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
     database.setDatabaseName(getDatabaseLocation());
@@ -48,7 +49,7 @@ DeviceRecord getRegisteredDataByDevice(std::string p_deviceID, int p_initialDate
     QSqlQuery query = QSqlQuery(database);
 
     query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? and rowid % 10 = 0 order by date");
-    query.addBindValue(QString(p_deviceID.c_str()));
+    query.addBindValue(p_deviceID);
     query.addBindValue(p_initialDate);
     query.addBindValue(p_finalDate);
     if (query.exec()) {
@@ -77,45 +78,105 @@ DeviceRecord getRegisteredDataByDevice(std::string p_deviceID, int p_initialDate
     return deviceRecords;
 }
 
-//std::vector<DeviceRecord> getRecordData(int p_beginDate, int p_endDate)
-//{
-//    QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
-//    database.setDatabaseName(getDatabaseLocation());
+/**
+ * @brief getRegisteredDataByDevice_2
+ * @param p_deviceID
+ * @param p_initialDate
+ * @param p_finalDate
+ * @return
+ */
+QJsonObject
+getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDate)
+{
+    QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
+    database.setDatabaseName(getDatabaseLocation());
 
-//    if (!database.open()) {
-//        return std::vector<DeviceRecord>();
-//    }
-//    std::vector<DeviceRecord> deviceRecords;
+    if (!database.open()) {
+        return QJsonObject();
+    }
 
-//    QSqlQuery query = QSqlQuery(database);
+    QJsonObject deviceRecord;
+    deviceRecord.insert("ID", p_deviceID);
 
-//    query.prepare("select * from datarecord where date >= ? and date <= ?");
-//    query.addBindValue(p_beginDate);
-//    query.addBindValue(p_endDate);
-//    if (query.exec()) {
-//        while (query.next()) {
-//            deviceRecords.push_back(DeviceRecord());
-//            deviceRecords.back().deviceID = query.value(1).toString();
-//            deviceRecords.back().date = query.value(2).toInt();
-//            deviceRecords.back().ppm = query.value(3).toInt();
-//        }
-//    }
+    QSqlQuery query = QSqlQuery(database);
+    query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? and rowid % 10 = 0 order by date");
+    query.addBindValue(p_deviceID);
+    query.addBindValue(p_initialDate);
+    query.addBindValue(p_finalDate);
+
+    QSqlQuery temperatureQuery = QSqlQuery(database);
+    temperatureQuery.prepare("select * from temperaturerecord where datarecordId = ?");
+
+    QJsonArray jsonRecords;
+    if (query.exec()) {
+        while (query.next()) {
+            QJsonObject jsonRecord;
+//            jsonRecord.insert("ID", query.value(0).toInt());
+            jsonRecord.insert("date", query.value(2).toInt());
+            jsonRecord.insert("ppm", query.value(3).toInt());
+
+            QJsonArray temperatures;
+            temperatureQuery.addBindValue(query.value(0).toInt());
+            if (temperatureQuery.exec()) {
+                while (temperatureQuery.next()) {
+                    temperatures.append(temperatureQuery.value(2).toDouble());
+                }
+            }
+            jsonRecord.insert("temperatures", temperatures);
+
+            jsonRecords.append(jsonRecord);
+        }
+    }
+
+//    QJsonObject testobj {
+//        {"date", 0},
+//        {"ppm", 0},
+//        {"temperatures", 0}
+//    };
+
+//    jsonRecords[0] = ;/*.insert("temperature", 9);*/
+
 
 //    query.prepare("select * from temperaturerecord where datarecordId = ?");
-//    for (DeviceRecord deviceRecord : deviceRecords) {
-//        query.addBindValue(deviceRecord.deviceID);
+
+//    QJsonArray::Iterator it;
+//    for (it = jsonRecords.begin(); it != jsonRecords.end(); ++it) {
+//        int id = (*it).toObject().value("ID").toInt();
+////        QString ppm = (*it).toObject().value("ppm").toString();
+////        int id = (*it).toObject().value("id").toInt();
+//        query.addBindValue(id);
+////        query.addBindValue(registeredData.id);
+////        QJsonArray temperatures;
+//        QJsonArray temperatures;
 //        if (query.exec()) {
 //            while (query.next()) {
-//                deviceRecord.temperatures.push_back(query.value(2).toFloat());
+//                temperatures.append(QJsonValue(query.value(2).toDouble()));
+////                double temperature = query.value(2).toDouble();
+////                QJsonObject obj = (*it);
+
+////                ((((*it).toObject())["temperatures"]).toArray()).append(QJsonValue(temperature));
+////                ((((*it).toObject())["temperatures"]).toArray()).append(temperature);
 //            }
 //        }
+//        ((*it).toObject()).insert("temperatures", QJsonValue(temperatures));
 //    }
 
-//    database = QSqlDatabase();
-//    QSqlDatabase::removeDatabase(getDatabaseName());
+    deviceRecord.insert("records", jsonRecords);
 
-//    return deviceRecords;
-//}
+//    // TEMPERATURE DATA
+//    QJsonArray jsonTemperatures;
+
+//    // RECORD DATA
+//    QJsonObject jsonRecord;
+
+//    // DEVICE RECORD
+//    QJsonObject jsonDevice;
+
+    database = QSqlDatabase();
+    QSqlDatabase::removeDatabase(getDatabaseName());
+
+    return deviceRecord;
+}
 
 /**
  * @brief recordDeviceData
@@ -157,7 +218,7 @@ void recordTemperature(QSqlQuery &p_query, QVariant &p_registerId, float &p_temp
  * @param p_temperatures
  * @return
  */
-QSqlError recordData(QString p_deviceId, qint64 p_ppm, std::vector<float> p_temperatures)
+QSqlError recordData(QString p_deviceId, qint64 p_ppm, QVector<float> p_temperatures)
 {
     QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
     database.setDatabaseName(getDatabaseLocation());

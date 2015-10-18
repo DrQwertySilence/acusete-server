@@ -1,14 +1,10 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include <vector>
-#include <string>
-
 #include <QObject>
-
 #include <QSerialPort>
-
 #include <QSqlQuery>
+#include <QVector>
 
 class Device : public QObject
 {
@@ -16,13 +12,14 @@ class Device : public QObject
 private:
     QSerialPort *m_serialPort;
 
-    std::string m_id;
+    QString m_id;
 
     QByteArray *m_dataByteArray; // Where data from serial is temporaly stored
     int m_maxArraySize; // Max size of the buffer
 
     int m_ppm;
-    std::vector<float> m_temperatures;
+
+    QVector<float> m_temperatures;
 
 signals:
     void dataReceived();
@@ -35,11 +32,9 @@ public:
     virtual ~Device();
 
     int getPPM();
-    std::vector<float> getTemperatures();
+    QVector<float> getTemperatures();
 
-    std::string getId();
-
-    std::string getRecordedData(int p_initialDate, int p_finalDate);
+    QString getId();
 
     // SQL stuff
     void recordAllData();

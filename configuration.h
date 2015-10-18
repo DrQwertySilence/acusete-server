@@ -1,17 +1,19 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#include <vector>
-#include <string>
+#include <QString>
+#include <QVector>
+
+#include <QJsonObject>
 
 class Configuration
 {
 public:
-    std::string getSensorAlarmPath();
-    std::string getTimerAlarmPath();
-    std::string getDeviceListPath();
+    QString getSensorAlarmPath();
+    QString getTimerAlarmPath();
+    QString getDeviceListPath();
 
-    std::vector<std::string> readFile(std::string pPath);
+    QJsonObject readFile(QString pPath);
 
     Configuration();
 };

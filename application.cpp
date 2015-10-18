@@ -1,13 +1,9 @@
 #include "application.h"
 
-#include <stdlib.h>
-#include <time.h>
-
-#include <iostream>
-#include <sstream>
-#include <string>
-
 #include <QDebug>
+
+#include <QJsonDocument>
+#include <QJsonObject>
 
 /**
  * @brief Application::Application
@@ -20,13 +16,13 @@ Application::Application(int &argc, char **argv) :
     m_serialTimer(new QTimer(this)),
     m_serialTimerDelay(250),
     /// Server
-    m_webSocketServer(new QWebSocketServer(QStringLiteral("acusete server"), QWebSocketServer::NonSecureMode, this))
+    m_webSocketServer(new QWebSocketServer("acusete server", QWebSocketServer::NonSecureMode, this))
 {
     m_serialTimer->start(m_serialTimerDelay);
 
     /// Websocket server port
-    std::vector<std::string> args = m_data->getConfiguration()->readFile("../share/acusete/server/port");
-    int port = atoi(args[0].c_str());
+    QJsonObject serverConfig = m_data->getConfiguration()->readFile("../etc/acusete/port.json");
+    int port = serverConfig.value("port").toInt(0);
 
     if (m_webSocketServer->listen(QHostAddress::Any, port)) {
         QObject::connect(m_webSocketServer, &QWebSocketServer::newConnection,
@@ -78,7 +74,7 @@ Application::workOnSerialData()
  * @param p_minTemperature
  */
 void
-Application::processSerialData(std::vector<Device*> p_devices, const int p_maxPPM, const float p_minTemperature)
+Application::processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p_minTemperature)
 {
     for (Device *device : p_devices) {
         if (device->getPPM() > p_maxPPM) {
@@ -95,18 +91,18 @@ Application::processSerialData(std::vector<Device*> p_devices, const int p_maxPP
  * @param p_devices
  * @return
  */
-std::string
-Application::getSerialDataString(std::vector<Device*> p_devices)
+QString
+Application::getSerialDataString(QVector<Device*> p_devices)
 {
-    std::stringstream string;
+    QString line;
     for (Device *device : p_devices) {
-        string << "Device: " << device->getId() << " Data: " << device->getPPM();
+        line.append("Device: " + device->getId() + " Data: " + QString::number(device->getPPM()));
         for (float temperature : device->getTemperatures()) {
-            string << " " << temperature;
+            line.append(" " + QString::number(temperature));
         }
-        string << '\n';
+        line.append('\n');
     }
-    return string.str();
+    return line;
 }
 
 /**
@@ -187,15 +183,6 @@ Application::getData()
     return m_data;
 }
 
-/**
- * @brief Application::printTest TEST FUNCTION: Delete if possible
- */
-void
-Application::printTest()
-{
-    std::cout << m_data->getTimers().size();
-}
-
 ///Websocket Server
 
 /**
@@ -225,76 +212,127 @@ Application::processTextMessage(QString p_message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     if (pClient) {
-        std::stringstream stream;
-        stream.str(p_message.toStdString());
-        std::string word;
-        std::vector<std::string> words;
+        QStringList words = p_message.split(' ');
+        QString command = words.front();
 
-        for (int i = 0; stream.good(); ++i) {
-            std::getline(stream, word, ' ');
-            words.push_back(word);
-        }
-
-        if (words.front() == "/alert") {
+        if (command == "/alert") {
             if (words.size() == 1) {
-                pClient->sendTextMessage("/alert up");
+                QJsonDocument document;
+                QJsonObject subObj {{"value", 1}};
+                QJsonObject obj {
+                    {"message", "alert"},
+                    {"msgData", subObj}
+                };
+                document.setObject(obj);
+                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
                 startTimerAlarm();
             } else if (words.at(1) == "start") {
-                pClient->sendTextMessage("/alert up");
+                QJsonDocument document;
+                QJsonObject subObj {{"value", 1}};
+                QJsonObject obj {
+                    {"message", "alert"},
+                    {"msgData", subObj}
+                };
+                document.setObject(obj);
+                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
                 startTimerAlarm();
             } else if (words.at(1) == "stop") {
-                pClient->sendTextMessage("/alert down");
+                QJsonDocument document;
+                QJsonObject subObj {{"value", 0}};
+                QJsonObject obj {
+                    {"message", "alert"},
+                    {"msgData", subObj}
+                };
+                document.setObject(obj);
+                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
                 stopTimerAlarm();
             }
 
-        } else if (words.front() == "/setTimer") {
-            pClient->sendTextMessage("timer setted");
+        } else if (command == "/setTimer") {
             if (words.size() == 1)
                 timerReceived(0);
             else {
-                int milliseconds = atoi(words.at(1).c_str());
+                int milliseconds = words.at(1).toInt();
                 if (milliseconds < 0)
                     milliseconds = 0;
                 timerReceived(milliseconds);
             }
 
-        } else if (words.front() == "/sendMessage" || words.front() == "/sm") {
-            if (words.size() == 1)
-                pClient->sendTextMessage("No message setted");
-            else {
-                pClient->sendTextMessage(words.at(1).c_str());
-            }
+        } else if (command == "/getTimers") {
+            QJsonArray timerArray = m_data->getFormatedTimers();
 
-        } else if (words.front() == "/getTimers") {
-            std::string timers = "/displayTimers ";
-            timers.append(m_data->getFormatedTimers());
-            pClient->sendTextMessage(timers.c_str());
+            QJsonDocument document;
+            QJsonObject obj {
+                {"message", "displayTimers"},
+                {"msgData", timerArray}
+            };
+            document.setObject(obj);
 
-        } else if (words.front() == "/getSensorData") {
-            std::stringstream sensorData; // Ex: /displaySensorData device1:1442107814:144:32 device2:1442107814:144:32...
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
-            sensorData << "/displaySensorData";
+        } else if (command == "/getSensorData") {
+            QJsonArray devicesData = m_data->getFormatedDeviceData();
 
-            for (Device *device : m_data->getDevices()) {
-                sensorData << " " << device->getId();
-                sensorData << ":" << time(NULL);
-                sensorData << ":" << std::to_string(device->getPPM());
-                for (auto temperature : device->getTemperatures()) {
-                    sensorData << ":" << std::to_string(temperature);
-                }
-            }
+            QJsonDocument document;
+            QJsonObject obj {
+                {"message", "displaySensorData"},
+                {"msgData", devicesData}
+            };
+            document.setObject(obj);
 
-            pClient->sendTextMessage(sensorData.str().c_str());
-        } else if (words.front() == "/getRecordedData") {
-            // STUB
-            std::string message = std::string();
-            message.append("/recordedDataForGraph ");
-            for (Device *device : m_data->getDevices())
-                if (device->getId() == words.at(1)) {
-                    message.append(device->getRecordedData(atoi(words.at(2).c_str()), atoi(words.at(3).c_str())));
-                    pClient->sendTextMessage(QString(message.c_str()));
-                    break;
-                }
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+
+        } else if (command == "/getRecordedData") {
+            QJsonArray devicesRecords = m_data->getRecordedData(words.at(2).toInt(), words.at(3).toInt());
+
+            QJsonDocument document;
+            QJsonObject obj {
+                {"message", "recordedDataForGraph"},
+                {"msgData", devicesRecords}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+
+        } else if (command == "/resumeTimer") {
+            m_data->getTimerById(words.at(1).toInt())->resume();
+            QString message = "/timerResumed ";
+            message.append(words.at(1));
+            pClient->sendTextMessage(message);
+
+        } else if (command == "/pauseTimer") {
+            m_data->getTimerById(words.at(1).toInt())->pause();
+            QString message = "/timerPaused ";
+            message.append(words.at(1));
+            pClient->sendTextMessage(message);
+
+        } else if (command == "/stopTimer") {
+            m_data->getTimerById(words.at(1).toInt())->stop();
+            QString message = "/timerStopped ";
+            message.append(words.at(1));
+            pClient->sendTextMessage(message);
+
+        } else if (command == "/restartTimer") {
+            m_data->getTimerById(words.at(1).toInt())->restart();
+            QString message = "/timerRestarted ";
+            message.append(words.at(1));
+            pClient->sendTextMessage(message);
+
+        } else if (command == "/destroyTimer") {
+            m_data->getTimerById(words.at(1).toInt())->destroy();
+            QString message = "/timerDestroyed ";
+            message.append(words.at(1));
+            pClient->sendTextMessage(message);
+
+        } else if (command == "/test_json") {
+            QJsonDocument document;
+            QJsonObject subObj {{"value", 1}};
+            QJsonObject obj {
+                {"message", "alert"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
         }
     }
 }

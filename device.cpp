@@ -1,10 +1,5 @@
 #include "device.h"
 
-#include <stdlib.h>
-
-#include <sstream>
-#include <iostream>
-
 #include "database.h"
 
 /**
@@ -55,7 +50,7 @@ Device::getPPM()
  * @brief Device::getTemperatures
  * @return
  */
-std::vector<float>
+QVector<float>
 Device::getTemperatures()
 {
     return m_temperatures;
@@ -65,36 +60,14 @@ Device::getTemperatures()
  * @brief Device::getId
  * @return
  */
-std::string
+QString
 Device::getId()
 {
     return m_id;
 }
 
 /**
- * @brief Device::getRecordedData Get all data recorded by this device from a range of dates.
- * @param p_initialDate
- * @param p_finalDate
- * @return The recorded data as a string. Ex: deviceID date:144:32:32:32 date:144:32:32:32...
- */
-std::string
-Device::getRecordedData(int p_initialDate, int p_finalDate)
-{
-    DeviceRecord deviceRecord = getRegisteredDataByDevice(m_id, p_initialDate, p_finalDate);
-    std::stringstream dataString;
-    dataString << deviceRecord.deviceID;
-    for (RegisteredData registeredData : deviceRecord.registeredData) {
-        dataString << " " << registeredData.date << ":" << registeredData.ppm;
-        for (float temperature : registeredData.temperatures) {
-            dataString << ":" << temperature;
-        }
-    }
-//    std::cout << dataString.str();
-    return dataString.str();
-}
-
-/**
- * @brief Device::getData
+ * @brief Device::getData Get sensor data from arduino device
  */
 void
 Device::getData()
@@ -102,42 +75,23 @@ Device::getData()
     //    (*m_dataByteArray).append(m_serialPort->readAll());
     int size = m_serialPort->bytesAvailable();
     if (size >= m_maxArraySize * 3) {
-        m_dataByteArray->append(m_serialPort->read(m_maxArraySize * 3));
-        ///
-        std::string stripedData;
-        std::stringstream stream;
-        stream.str(QString(*m_dataByteArray).toStdString());
+//        m_dataByteArray->append(m_serialPort->read(m_maxArraySize * 3));
+        m_dataByteArray->append(m_serialPort->readAll());
+        //
+        QString _test(*m_dataByteArray);
 
-        int i = 0;
-        while (stream.good() && i <= 1) {
-            if (i == 2) {
-                std::getline(stream, stripedData);
-                break;
-            } else {
-                std::getline(stream, stripedData);
-                ++i;
-            }
-        }
-        ///
-        std::vector<std::string> sensorData;
-        std::stringstream line;
-        std::string word;
+        QStringList _test_list = _test.split('\n');
+        QString _stripped_data = _test_list.at(2);
 
-        line.str(stripedData);
+        QStringList sensorData = _stripped_data.split(' ');
 
-        while(line.good()) {
-            std::getline(line, word, ' ');
-            sensorData.push_back(word);
-        }
-        ///
         m_temperatures.clear();
-        for (auto it = sensorData.begin(); it != sensorData.end(); ++it) {
+        for (QStringList::const_iterator it = sensorData.begin(); it != sensorData.end(); ++it)
             if (it == sensorData.begin())
-                m_ppm = atoi((*it).c_str());
+                m_ppm = ((QString)*it).toInt();
             else
-                m_temperatures.push_back(atof((*it).c_str()));
-        }
-        ///
+                m_temperatures.append(((QString)*it).toFloat());
+
         m_serialPort->clear();
         m_dataByteArray->clear();
         dataReceived();
@@ -152,5 +106,5 @@ Device::getData()
 void
 Device::recordAllData()
 {
-    recordData(QString(m_id.c_str()), m_ppm, m_temperatures);
+    recordData(m_id, m_ppm, m_temperatures);
 }

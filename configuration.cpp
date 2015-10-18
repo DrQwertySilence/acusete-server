@@ -1,8 +1,9 @@
 #include "configuration.h"
 
-#include <sstream>
-#include <string>
-#include <fstream>
+#include <QFile>
+
+#include <QJsonDocument>
+#include <QJsonObject>
 
 /**
  * @brief Configuration::Configuration
@@ -16,7 +17,7 @@ Configuration::Configuration()
  * @brief Configuration::getSensorAlarmPath
  * @return
  */
-std::string
+QString
 Configuration::getSensorAlarmPath()
 {
     return "../share/acusete/sound/alert-short.wav";
@@ -26,7 +27,7 @@ Configuration::getSensorAlarmPath()
  * @brief Configuration::getTimerAlarmPath
  * @return
  */
-std::string
+QString
 Configuration::getTimerAlarmPath()
 {
     return "../share/acusete/sound/alarm2.wav";
@@ -36,37 +37,29 @@ Configuration::getTimerAlarmPath()
  * @brief Configuration::getDeviceListPath
  * @return
  */
-std::string
+QString
 Configuration::getDeviceListPath()
 {
-    return "../etc/acusete/arduino";
+    return "../etc/acusete/arduino.json";
 }
 
 /**
- * @brief Configuration::readFile
- * @param pPath
- * @return
+ * @brief Configuration::readFile Get the content of a json file.
+ * @param pPath The location of the file.
+ * @return The content of the document as a json object.
  */
-std::vector<std::string>
-Configuration::readFile(std::string pPath)
+QJsonObject
+Configuration::readFile(QString pPath)
 {
-    std::vector<std::string> args;
-    std::ifstream file;
-    file.open(pPath);
-    std::stringstream line;
-    std::string tempLine;
-    std::string word;
-    if(file.is_open()) {
-        while(file.good()) {
-            std::getline(file, tempLine);
-            line.str(tempLine);
-            while(line.good()) {
-                std::getline(line, word, ' ');
-                args.push_back(word);
-            }
-        }
-        file.close();
+    QFile file(pPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        ;
+        return QJsonObject();
     } else {
+        QJsonDocument config = QJsonDocument::fromJson(file.readAll());
+        //
+        file.close();
+        //
+        return config.object();
     }
-    return args;
 }

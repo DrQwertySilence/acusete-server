@@ -1,14 +1,15 @@
 #ifndef DATA_H
 #define DATA_H
 
-#include <vector>
-#include <string>
-#include <vector>
+#include "timer.h"
 
 #include <QObject>
 #include <QSound>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QVector>
 
-#include "timer.h"
 #include "device.h"
 #include "configuration.h"
 
@@ -20,11 +21,12 @@ private:
     QSound *m_timerAlarm;
 
     Configuration *m_configuration;
-    std::vector<Device*> m_devices;
+//    std::vector<Device*> m_devices;
+    QVector<Device*> m_devices;
     QList<Timer*> m_timers;
 //    std::vector<Timer*> m_timers;
 
-    void initDevices(std::string p_path);
+    void initDevices(QString p_path);
 
 private slots:
     void removeTimer(Timer *p_timer);
@@ -35,14 +37,20 @@ public:
 
     void addTimer(int p_milliseconds);
 
-    std::vector<Device*> getDevices();
+    QVector<Device*> getDevices();
     QList<Timer *> getTimers();
     Timer* getTimerById(int p_id);
+    void destroyTimerById(int p_id);
 
     QSound* getTimerAlarm();
     QSound* getSensorAlarm();
 
-    std::string getFormatedTimers();
+//    std::string getFormatedTimers();
+    QJsonArray getFormatedTimers();
+
+    QJsonArray getFormatedDeviceData();
+
+    QJsonArray getRecordedData(int p_initialDate, int p_finalDate);
 
     Configuration* getConfiguration();
 };

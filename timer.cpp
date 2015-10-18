@@ -1,11 +1,9 @@
 #include "timer.h"
 
-#include <iostream>
-
 #include "application.h"
 
 /**
- * @brief Timer::idCount
+ * @brief Timer::idCount The id that is going to be assigned to a new Timer object.
  */
 int Timer::idCount = 0;
 
@@ -16,7 +14,7 @@ int Timer::idCount = 0;
 int
 Timer::getNextId()
 {
-    idCount++;
+    ++idCount;
     return idCount;
 }
 
@@ -30,7 +28,7 @@ Timer::Timer(int p_time, QObject *p_parent) :
     m_id(getNextId()),
     m_initialTime(p_time),
     m_remainingTime(p_time),
-    m_timer(new QTimer)
+    m_timer(new QTimer(this))
 {
     connect(m_timer, &QTimer::timeout,
             (Application*)this->parent()->parent(), &Application::startTimerAlarm);
@@ -59,6 +57,10 @@ Timer::resume()
     if (m_timer == nullptr)
         m_timer = new QTimer();
     m_timer->start(m_remainingTime);
+    //
+    m_state = TIMER_STATE::COUNTING;
+    //
+    resumed();
 }
 
 /**
@@ -67,9 +69,17 @@ Timer::resume()
 void
 Timer::pause()
 {
-    m_remainingTime = m_timer->remainingTime();
-    m_timer->stop();
-    delete m_timer;
+    if (m_timer->timerId() == -1) {
+        ;
+    } else {
+        m_remainingTime = m_timer->remainingTime();
+        m_timer->stop();
+//        delete m_timer;
+    }
+    //
+    m_state = TIMER_STATE::PAUSED;
+    //
+    paused();
 }
 
 /**
@@ -78,8 +88,17 @@ Timer::pause()
 void
 Timer::stop()
 {
-    m_remainingTime = m_timer->remainingTime();
-    delete this;
+//    m_remainingTime = -1;
+    int i = m_timer->remainingTime();
+    if (i == -1);
+    else
+        m_remainingTime = i;
+
+    m_timer->stop();
+    //
+    m_state = TIMER_STATE::STOPPED;
+    //
+    stopped();
 }
 
 /**
@@ -91,6 +110,24 @@ Timer::restart()
     delete m_timer;
     m_timer = new QTimer();
     m_timer->start(m_initialTime);
+    //
+    m_state = TIMER_STATE::COUNTING;
+    //
+    restarted();
+}
+
+/**
+ * @brief Timer::destroy
+ */
+void
+Timer::destroy()
+{
+    destroyed();
+    //
+    m_state = TIMER_STATE::DESTROYED;
+    //
+    ((Data *)parent())->destroyTimerById(m_id);
+//    delete this;
 }
 
 /**
@@ -116,7 +153,10 @@ Timer::getInitialTime()
 int
 Timer::getRemainingTime()
 {
-    return m_timer->remainingTime();
+    if (m_timer->timerId() == -1)
+        return m_remainingTime;
+    else
+        return m_timer->remainingTime();
 }
 
 /**

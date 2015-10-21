@@ -133,16 +133,6 @@ Data::addTimer(int p_milliseconds)
 }
 
 /**
- * @brief Data::getTimers
- * @return
- */
-QList<Timer *>
-Data::getTimers()
-{
-    return m_timers;
-}
-
-/**
  * @brief Data::getTimerById
  * @param p_id
  * @return
@@ -163,18 +153,18 @@ Data::getTimerById(int p_id)
 void
 Data::destroyTimerById(int p_id)
 {
-    int count = m_timers.count();
+    const int lastElementPos = m_timers.size() - 1;
+    const int count = m_timers.count();
     for (int i = 0; i < count; ++i)
         if (m_timers[i]->getId() == p_id) {
-            delete m_timers[i];
-            m_timers.removeAt(i);
+            Timer * timer = m_timers[i];
+            m_timers.swap(i, lastElementPos);
+            m_timers.pop_back();
+            delete timer;
+            break;
         }
 }
 
-///**
-// * @brief Data::getFormatedTimers
-// * @return
-// */
 //std::string
 //Data::getFormatedTimers()
 //{
@@ -218,7 +208,7 @@ Data::getFormatedTimers()
     for (auto timer : this->m_timers) {
         QJsonObject jsonTimer {
             {"ID", timer->getId()},
-            {"remainingTime", (timer->getRemainingTime() / 1000)}
+            {"remainingTime", (timer->getRemainingTime())}
         };
         timers.append(jsonTimer);
     }

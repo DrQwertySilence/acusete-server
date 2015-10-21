@@ -9,6 +9,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QVector>
+//test
+#include <QLinkedList>
 
 #include "device.h"
 #include "configuration.h"
@@ -24,6 +26,7 @@ private:
 //    std::vector<Device*> m_devices;
     QVector<Device*> m_devices;
     QList<Timer*> m_timers;
+//    QLinkedList<Timer*> m_timers;
 //    std::vector<Timer*> m_timers;
 
     void initDevices(QString p_path);
@@ -38,7 +41,6 @@ public:
     void addTimer(int p_milliseconds);
 
     QVector<Device*> getDevices();
-    QList<Timer *> getTimers();
     Timer* getTimerById(int p_id);
     void destroyTimerById(int p_id);
 

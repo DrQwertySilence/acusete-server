@@ -111,7 +111,6 @@ getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDa
     if (query.exec()) {
         while (query.next()) {
             QJsonObject jsonRecord;
-//            jsonRecord.insert("ID", query.value(0).toInt());
             jsonRecord.insert("date", query.value(2).toInt());
             jsonRecord.insert("ppm", query.value(3).toInt());
 
@@ -128,49 +127,7 @@ getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDa
         }
     }
 
-//    QJsonObject testobj {
-//        {"date", 0},
-//        {"ppm", 0},
-//        {"temperatures", 0}
-//    };
-
-//    jsonRecords[0] = ;/*.insert("temperature", 9);*/
-
-
-//    query.prepare("select * from temperaturerecord where datarecordId = ?");
-
-//    QJsonArray::Iterator it;
-//    for (it = jsonRecords.begin(); it != jsonRecords.end(); ++it) {
-//        int id = (*it).toObject().value("ID").toInt();
-////        QString ppm = (*it).toObject().value("ppm").toString();
-////        int id = (*it).toObject().value("id").toInt();
-//        query.addBindValue(id);
-////        query.addBindValue(registeredData.id);
-////        QJsonArray temperatures;
-//        QJsonArray temperatures;
-//        if (query.exec()) {
-//            while (query.next()) {
-//                temperatures.append(QJsonValue(query.value(2).toDouble()));
-////                double temperature = query.value(2).toDouble();
-////                QJsonObject obj = (*it);
-
-////                ((((*it).toObject())["temperatures"]).toArray()).append(QJsonValue(temperature));
-////                ((((*it).toObject())["temperatures"]).toArray()).append(temperature);
-//            }
-//        }
-//        ((*it).toObject()).insert("temperatures", QJsonValue(temperatures));
-//    }
-
     deviceRecord.insert("records", jsonRecords);
-
-//    // TEMPERATURE DATA
-//    QJsonArray jsonTemperatures;
-
-//    // RECORD DATA
-//    QJsonObject jsonRecord;
-
-//    // DEVICE RECORD
-//    QJsonObject jsonDevice;
 
     database = QSqlDatabase();
     QSqlDatabase::removeDatabase(getDatabaseName());
@@ -188,9 +145,6 @@ getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDa
  */
 QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 p_time, qint64 &p_ppm)
 {
-//    time_t seconds;
-//    seconds = time(NULL);
-
     p_query.addBindValue(p_deviceId);
     p_query.addBindValue(p_time);
     p_query.addBindValue(p_ppm);

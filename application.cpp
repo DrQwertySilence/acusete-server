@@ -21,7 +21,7 @@ Application::Application(int &argc, char **argv) :
     m_serialTimer->start(m_serialTimerDelay);
 
     /// Websocket server port
-    QJsonObject serverConfig = m_data->getConfiguration()->readFile("../etc/acusete/port.json");
+    QJsonObject serverConfig = Configuration::configuration.getServerConfiguration();
     int port = serverConfig.value("port").toInt(0);
 
     if (m_webSocketServer->listen(QHostAddress::Any, port)) {
@@ -216,37 +216,21 @@ Application::processTextMessage(QString p_message)
         QString command = words.front();
 
         if (command == "/alert") {
-            if (words.size() == 1) {
-                QJsonDocument document;
-                QJsonObject subObj {{"value", 1}};
-                QJsonObject obj {
-                    {"message", "alert"},
-                    {"msgData", subObj}
-                };
-                document.setObject(obj);
-                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
-                startTimerAlarm();
-            } else if (words.at(1) == "start") {
-                QJsonDocument document;
-                QJsonObject subObj {{"value", 1}};
-                QJsonObject obj {
-                    {"message", "alert"},
-                    {"msgData", subObj}
-                };
-                document.setObject(obj);
-                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
-                startTimerAlarm();
-            } else if (words.at(1) == "stop") {
-                QJsonDocument document;
-                QJsonObject subObj {{"value", 0}};
-                QJsonObject obj {
-                    {"message", "alert"},
-                    {"msgData", subObj}
-                };
-                document.setObject(obj);
-                pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
-                stopTimerAlarm();
-            }
+            int value = 1;
+            if (words.size() == 1 || words.at(1) == "start")
+                value = 1;
+            else if (words.at(1) == "stop")
+                value = 0;
+
+            QJsonDocument document;
+            QJsonObject subObj {{"value", value}};
+            QJsonObject obj {
+                {"message", "alert"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            stopTimerAlarm();
 
         } else if (command == "/setTimer") {
             if (words.size() == 1)
@@ -296,33 +280,68 @@ Application::processTextMessage(QString p_message)
 
         } else if (command == "/resumeTimer") {
             m_data->getTimerById(words.at(1).toInt())->resume();
-            QString message = "/timerResumed ";
-            message.append(words.at(1));
-            pClient->sendTextMessage(message);
+
+            QJsonDocument document;
+            QJsonObject subObj {{"id", words.at(1).toInt()}};
+            QJsonObject obj {
+                {"message", "timerResumed"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
         } else if (command == "/pauseTimer") {
             m_data->getTimerById(words.at(1).toInt())->pause();
-            QString message = "/timerPaused ";
-            message.append(words.at(1));
-            pClient->sendTextMessage(message);
+
+            QJsonDocument document;
+            QJsonObject subObj {{"id", words.at(1).toInt()}};
+            QJsonObject obj {
+                {"message", "timerPaused"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
         } else if (command == "/stopTimer") {
             m_data->getTimerById(words.at(1).toInt())->stop();
-            QString message = "/timerStopped ";
-            message.append(words.at(1));
-            pClient->sendTextMessage(message);
+
+            QJsonDocument document;
+            QJsonObject subObj {{"id", words.at(1).toInt()}};
+            QJsonObject obj {
+                {"message", "timerStopped"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
         } else if (command == "/restartTimer") {
             m_data->getTimerById(words.at(1).toInt())->restart();
-            QString message = "/timerRestarted ";
-            message.append(words.at(1));
-            pClient->sendTextMessage(message);
+
+            QJsonDocument document;
+            QJsonObject subObj {{"id", words.at(1).toInt()}};
+            QJsonObject obj {
+                {"message", "timerRestarted"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
         } else if (command == "/destroyTimer") {
             m_data->getTimerById(words.at(1).toInt())->destroy();
-            QString message = "/timerDestroyed ";
-            message.append(words.at(1));
-            pClient->sendTextMessage(message);
+
+            QJsonDocument document;
+            QJsonObject subObj {{"id", words.at(1).toInt()}};
+            QJsonObject obj {
+                {"message", "timerDestroyed"},
+                {"msgData", subObj}
+            };
+            document.setObject(obj);
+
+            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
 
         } else if (command == "/test_json") {
             QJsonDocument document;
@@ -332,6 +351,7 @@ Application::processTextMessage(QString p_message)
                 {"msgData", subObj}
             };
             document.setObject(obj);
+
             pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
         }
     }

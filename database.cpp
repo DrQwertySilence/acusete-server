@@ -1,8 +1,37 @@
 #include "database.h"
 
 /**
- * @brief getSQLDriver
+ * @brief checkTableExistence
+ * @param p_database
+ * @param p_table
  * @return
+ */
+bool checkTableExistence(QSqlDatabase p_database, QString p_table)
+{
+    QStringList tables = p_database.tables();
+    if (tables.contains(p_table))
+        return true;
+    return false;
+}
+
+/**
+ * @brief checkTableExistence
+ * @param p_database
+ * @param p_tables
+ * @return
+ */
+bool checkTableExistence(QSqlDatabase p_database, QStringList p_tables)
+{
+    QStringList tables = p_database.tables();
+    for (QString table : p_tables)
+        if (!tables.contains(table))
+            return false;
+    return true;
+}
+
+/**
+ * @brief getSQLDriver
+ * @return The name of the SQL driver
  */
 const QString getSQLDriver()
 {
@@ -11,7 +40,7 @@ const QString getSQLDriver()
 
 /**
  * @brief getDatabaseLocation
- * @return
+ * @return The physical location of the SQL database.
  */
 const QString getDatabaseLocation()
 {
@@ -34,59 +63,8 @@ const QString getDatabaseName()
  * @param p_finalDate
  * @return
  */
-DeviceRecord
-getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate)
-{
-    QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
-    database.setDatabaseName(getDatabaseLocation());
-
-    if (!database.open()) {
-        return DeviceRecord();
-    }
-    DeviceRecord deviceRecords;
-    deviceRecords.deviceID = p_deviceID;
-
-    QSqlQuery query = QSqlQuery(database);
-
-    query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? and rowid % 10 = 0 order by date");
-    query.addBindValue(p_deviceID);
-    query.addBindValue(p_initialDate);
-    query.addBindValue(p_finalDate);
-    if (query.exec()) {
-        while (query.next()) {
-            deviceRecords.registeredData.push_back(RegisteredData());
-            deviceRecords.registeredData.back().id = query.value(0).toInt();
-            deviceRecords.registeredData.back().date = query.value(2).toInt();
-            deviceRecords.registeredData.back().ppm = query.value(3).toInt();
-        }
-    }
-
-    query.prepare("select * from temperaturerecord where datarecordId = ?");
-    for (RegisteredData &registeredData : deviceRecords.registeredData) {
-        query.addBindValue(registeredData.id);
-        if (query.exec()) {
-            while (query.next()) {
-                float temperature = query.value(2).toFloat();
-                registeredData.temperatures.push_back(temperature);
-            }
-        }
-    }
-
-    database = QSqlDatabase();
-    QSqlDatabase::removeDatabase(getDatabaseName());
-
-    return deviceRecords;
-}
-
-/**
- * @brief getRegisteredDataByDevice_2
- * @param p_deviceID
- * @param p_initialDate
- * @param p_finalDate
- * @return
- */
 QJsonObject
-getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDate)
+getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate)
 {
     QSqlDatabase database = QSqlDatabase::addDatabase(getSQLDriver(), getDatabaseName());
     database.setDatabaseName(getDatabaseLocation());

@@ -9,6 +9,7 @@
 #include <QWebSocketServer>
 
 #include "data.h"
+#include "configuration.h"
 
 class Application : public QCoreApplication
 {

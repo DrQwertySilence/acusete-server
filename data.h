@@ -22,14 +22,10 @@ private:
     QSound *m_sensorAlarm;
     QSound *m_timerAlarm;
 
-    Configuration *m_configuration;
-//    std::vector<Device*> m_devices;
     QVector<Device*> m_devices;
     QList<Timer*> m_timers;
-//    QLinkedList<Timer*> m_timers;
-//    std::vector<Timer*> m_timers;
 
-    void initDevices(QString p_path);
+    void initDevices(QJsonObject p_configuration);
 
 private slots:
     void removeTimer(Timer *p_timer);
@@ -47,14 +43,11 @@ public:
     QSound* getTimerAlarm();
     QSound* getSensorAlarm();
 
-//    std::string getFormatedTimers();
     QJsonArray getFormatedTimers();
 
     QJsonArray getFormatedDeviceData();
 
     QJsonArray getRecordedData(int p_initialDate, int p_finalDate);
-
-    Configuration* getConfiguration();
 };
 
 #endif // DATA_H

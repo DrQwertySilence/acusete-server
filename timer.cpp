@@ -69,12 +69,9 @@ Timer::resume()
 void
 Timer::pause()
 {
-    if (m_timer->timerId() == -1) {
-        ;
-    } else {
+    if (m_timer->timerId() != -1) {
         m_remainingTime = m_timer->remainingTime();
         m_timer->stop();
-//        delete m_timer;
     }
     //
     m_state = TIMER_STATE::PAUSED;
@@ -90,8 +87,7 @@ Timer::stop()
 {
 //    m_remainingTime = -1;
     int i = m_timer->remainingTime();
-    if (i == -1);
-    else
+    if (i != -1)
         m_remainingTime = i;
 
     m_timer->stop();

@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include <QtSql>
+#include <QSqlError>
 #include <QtCore>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -23,11 +24,14 @@ struct DeviceRecord
     QVector<RegisteredData> registeredData;
 };
 
+bool checkTableExistence(QSqlDatabase p_database, QString p_table);
+bool checkTableExistence(QSqlDatabase p_database, QStringList p_tables);
+
 const QString getSQLDriver();
 const QString getDatabaseLocation();
 const QString getDatabaseName();
 
-QJsonObject getRegisteredDataByDevice_2(QString p_deviceID, int p_initialDate, int p_finalDate);
+QJsonObject getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate);
 
 QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 p_time, qint64 &p_ppm);
 void recordTemperature(QSqlQuery &p_query, QVariant &p_registerId, float &p_temperature);

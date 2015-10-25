@@ -11,15 +11,15 @@
  */
 Data::Data(QObject *pParent) :
     QObject(pParent),
-    m_sensorAlarm(new QSound(m_configuration->getSensorAlarmPath().toUtf8().data())),
-    m_timerAlarm(new QSound(m_configuration->getTimerAlarmPath().toUtf8().data()))
+    m_sensorAlarm(new QSound(Configuration::configuration.getSoundonConfiguration().value("strongAlarm").toString())),
+    m_timerAlarm(new QSound(Configuration::configuration.getSoundonConfiguration().value("softAlarm").toString()))
 {
     /// Alarm configuration
     m_sensorAlarm->setLoops(-1);
     m_timerAlarm->setLoops(-1);
 
     ///Serial port and baud rate configuration
-    initDevices(m_configuration->getDeviceListPath());
+    initDevices(Configuration::configuration.getDevicesConfiguration());
 }
 
 /**
@@ -30,14 +30,10 @@ Data::~Data()
     delete m_sensorAlarm;
     delete m_timerAlarm;
 
-    delete m_configuration;
-
     for (QVector<Device*>::Iterator it = m_devices.begin(); it != m_devices.end(); ++it) {
         delete *it;
     }
 
-//    for (auto *device : m_devices)
-//        delete device;
     m_devices.clear();
 
     for (auto *timer : m_timers)
@@ -47,15 +43,13 @@ Data::~Data()
 
 /**
  * @brief Data::initDevices
- * @param p_path
+ * @param p_configuration
  */
 void
-Data::initDevices(QString p_path)
+Data::initDevices(QJsonObject p_configuration)
 {
-    QJsonObject args = m_configuration->readFile(p_path);
-
     QSerialPort::BaudRate baudRate;
-    int baudRateInt = args.value("baudRate").toInt();
+    int baudRateInt = p_configuration.value("baudRate").toInt();
     switch (baudRateInt) {
     case 1200:
         baudRate = QSerialPort::BaudRate::Baud1200;
@@ -85,7 +79,7 @@ Data::initDevices(QString p_path)
         baudRate = QSerialPort::BaudRate::UnknownBaud;
     }
 
-    m_devices.push_back(new Device(args.value("port").toString(), baudRate));
+    m_devices.push_back(new Device(p_configuration.value("port").toString(), baudRate));
 }
 
 /**
@@ -165,42 +159,10 @@ Data::destroyTimerById(int p_id)
         }
 }
 
-//std::string
-//Data::getFormatedTimers()
-//{
-//    std::string formatedTimers;
-
-//    for (auto timer : this->m_timers) {
-//        if (timer != (*m_timers.begin()))
-//            formatedTimers.append(" ");
-//        timer->getRemainingTime();
-
-//        int timerRT = timer->getRemainingTime();
-
-//        int hours = timerRT / (60 * 60 * 1000);
-//        int minutes = (timerRT - (hours * 60 * 60 * 1000)) / (60 * 1000);
-//        int seconds = (timerRT - (minutes * 60 * 1000) -  (hours * 60 * 60 * 1000)) / 1000;
-////        int milliseconds = timerRT - (seconds * 1000) - (minutes * 1000 * 60) - (hours * 60 * 60 * 1000);
-
-//        std::string hoursStr = hours < 10 ? '0' + std::to_string(hours) : std::to_string(hours);
-//        std::string minutesStr = minutes < 10 ? '0' + std::to_string(minutes) : std::to_string(minutes);
-//        std::string secondsStr = seconds < 10 ? '0' + std::to_string(seconds) : std::to_string(seconds);
-
-//        std::string timerIdStr = std::to_string(timer->getId());
-
-//        formatedTimers.append(timerIdStr + ";");
-//        formatedTimers.append(hoursStr +
-//                              ":" +
-//                              minutesStr +
-//                              ":" +
-//                              secondsStr);/* +
-//                              ":" +
-//                              std::to_string(milliseconds));*/
-//    }
-
-//    return formatedTimers;
-//}
-
+/**
+ * @brief Data::getFormatedTimers
+ * @return
+ */
 QJsonArray
 Data::getFormatedTimers()
 {
@@ -254,18 +216,9 @@ Data::getRecordedData(int p_initialDate, int p_finalDate)
 {
     QJsonArray devicesRecord;
     for (Device *device : m_devices) {
-        devicesRecord.append(getRegisteredDataByDevice_2(device->getId(), p_initialDate, p_finalDate));
+        devicesRecord.append(getRegisteredDataByDevice(device->getId(), p_initialDate, p_finalDate));
     }
     return devicesRecord;
-}
-
-/**
- * @brief Data::getConfiguration
- * @return
- */
-Configuration*
-Data::getConfiguration() {
-    return m_configuration;
 }
 
 /**

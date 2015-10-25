@@ -1,3 +1,4 @@
+
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
@@ -8,14 +9,22 @@
 
 class Configuration
 {
+private:
+    QJsonObject m_serverConfiguration;
+    QJsonObject m_devicesConfiguration;
+    QJsonObject m_warningConfiguration;
+    QJsonObject m_soundConfiguration;
+
+    QJsonObject readFile(const QString pPath);
+
+    Configuration(const QString p_configurationFilePath);
 public:
-    QString getSensorAlarmPath();
-    QString getTimerAlarmPath();
-    QString getDeviceListPath();
+    static Configuration configuration;
 
-    QJsonObject readFile(QString pPath);
-
-    Configuration();
+    QJsonObject getServerConfiguration();
+    QJsonObject getDevicesConfiguration();
+    QJsonObject getWarningConfiguration();
+    QJsonObject getSoundonConfiguration();
 };
 
 #endif // CONFIGURATION_H

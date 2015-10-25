@@ -20,12 +20,10 @@ class Timer : public QObject
 private:
     static int idCount;
     static int getNextId();
-
     int m_id;
     int m_initialTime;
     int m_remainingTime;
     QTimer* m_timer;
-
     int m_state;
 
 public:
@@ -39,7 +37,6 @@ public:
     void destroy();
 
     int getId();
-    int getInitialTime();
     int getRemainingTime();
 
 private slots:

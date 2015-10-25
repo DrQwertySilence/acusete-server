@@ -136,12 +136,6 @@ Timer::getId()
     return m_id;
 }
 
-int
-Timer::getInitialTime()
-{
-    return m_initialTime;
-}
-
 /**
  * @brief Timer::getRemainingTime
  * @return

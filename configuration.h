@@ -14,9 +14,8 @@ private:
     QJsonObject m_devicesConfiguration;
     QJsonObject m_warningConfiguration;
     QJsonObject m_soundConfiguration;
-
+    //
     QJsonObject readFile(const QString pPath);
-
     Configuration(const QString p_configurationFilePath);
 public:
     static Configuration configuration;

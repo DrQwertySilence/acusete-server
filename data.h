@@ -21,10 +21,8 @@ class Data : public QObject
 private:
     QSound *m_sensorAlarm;
     QSound *m_timerAlarm;
-
     QVector<Device*> m_devices;
     QList<Timer*> m_timers;
-
     void initDevices(QJsonObject p_configuration);
 
 private slots:
@@ -35,18 +33,13 @@ public:
     virtual ~Data();
 
     void addTimer(int p_milliseconds);
-
     QVector<Device*> getDevices();
     Timer* getTimerById(int p_id);
     void destroyTimerById(int p_id);
-
     QSound* getTimerAlarm();
     QSound* getSensorAlarm();
-
     QJsonArray getFormatedTimers();
-
     QJsonArray getFormatedDeviceData();
-
     QJsonArray getRecordedData(int p_initialDate, int p_finalDate);
 };
 

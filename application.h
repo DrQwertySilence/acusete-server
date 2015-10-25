@@ -16,23 +16,17 @@ class Application : public QCoreApplication
     Q_OBJECT
 private:
     Data *m_data;
-
     QTimer *m_serialTimer; // Interval of time that the program waits to process received data
     int m_serialTimerDelay;
-
     int m_ppmMax;
     double m_temperatureMin;
-
     /// Websocket Server
     QWebSocketServer *m_webSocketServer;
     QList<QWebSocket*> m_webSocketClients;
-
     /// Serial Data
     void processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p_minTemperature);
-    QString getSerialDataString(QVector<Device*> p_devices);
 
 signals:
-    void isAlerted();
     ///Server
     void closed();
     void timerReceived(int pMilliseconds);
@@ -57,8 +51,6 @@ public slots:
 public:
     Application(int &argc, char **argv);
     virtual ~Application();
-
-    Data* getData();
 };
 
 #endif // APPLICATION_H

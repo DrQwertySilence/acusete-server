@@ -1,7 +1,5 @@
 #include "application.h"
 
-#include <QDebug>
-
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -89,25 +87,6 @@ Application::processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p
 }
 
 /**
- * @brief Application::getSerialDataString
- * @param p_devices
- * @return
- */
-QString
-Application::getSerialDataString(QVector<Device*> p_devices)
-{
-    QString line;
-    for (Device *device : p_devices) {
-        line.append("Device: " + device->getId() + " Data: " + QString::number(device->getPPM()));
-        for (float temperature : device->getTemperatures()) {
-            line.append(" " + QString::number(temperature));
-        }
-        line.append('\n');
-    }
-    return line;
-}
-
-/**
  * @brief Application::startAlarm
  * @param p_alarm The alarm that is going to be started.
  */
@@ -173,16 +152,6 @@ void
 Application::setTimer(int pMilliseconds)
 {
     m_data->addTimer(pMilliseconds);
-}
-
-/**
- * @brief Application::getData Getter of data object
- * @return the data object
- */
-Data*
-Application::getData()
-{
-    return m_data;
 }
 
 ///Websocket Server

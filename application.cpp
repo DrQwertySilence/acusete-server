@@ -15,6 +15,8 @@ Application::Application(int &argc, char **argv) :
     m_data(new Data(this)),
     m_serialTimer(new QTimer(this)),
     m_serialTimerDelay(250),
+    m_ppmMax(Configuration::configuration.getWarningConfiguration().value("ppm").toInt()),
+    m_temperatureMin(Configuration::configuration.getWarningConfiguration().value("temperature").toDouble()),
     /// Server
     m_webSocketServer(new QWebSocketServer("acusete server", QWebSocketServer::NonSecureMode, this))
 {
@@ -64,7 +66,7 @@ Application::~Application()
 void
 Application::workOnSerialData()
 {
-    processSerialData(m_data->getDevices(), 400, 35);
+    processSerialData(m_data->getDevices(), m_ppmMax, m_temperatureMin);
 }
 
 /**

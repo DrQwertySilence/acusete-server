@@ -20,6 +20,9 @@ private:
     QTimer *m_serialTimer; // Interval of time that the program waits to process received data
     int m_serialTimerDelay;
 
+    int m_ppmMax;
+    double m_temperatureMin;
+
     /// Websocket Server
     QWebSocketServer *m_webSocketServer;
     QList<QWebSocket*> m_webSocketClients;

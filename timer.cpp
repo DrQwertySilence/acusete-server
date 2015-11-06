@@ -19,13 +19,14 @@ Timer::getNextId()
 }
 
 /**
- * @brief Timer::Timer
- * @param p_time
- * @param p_parent
+ * @brief Timer::Timer Works as a wrapper for QTimer class.
+ * @param p_time Amount of time until the timer finish
+ * @param p_parent QObject parent.
  */
-Timer::Timer(int p_time, QObject *p_parent) :
+Timer::Timer(int p_time, QString p_description, QObject *p_parent) :
     QObject(p_parent),
     m_id(getNextId()),
+    m_description(p_description),
     m_initialTime(p_time),
     m_remainingTime(p_time),
     m_timer(new QTimer(this))
@@ -40,7 +41,7 @@ Timer::Timer(int p_time, QObject *p_parent) :
 }
 
 /**
- * @brief Timer::~Timer
+ * @brief Timer::~Timer Destroy the QTimer object.
  */
 Timer::~Timer()
 {
@@ -49,7 +50,7 @@ Timer::~Timer()
 }
 
 /**
- * @brief Timer::play
+ * @brief Timer::resume Start the QTimer object inside this object.
  */
 void
 Timer::resume()
@@ -64,7 +65,7 @@ Timer::resume()
 }
 
 /**
- * @brief Timer::pause
+ * @brief Timer::pause Pause the QTimer object inside this object.
  */
 void
 Timer::pause()
@@ -80,7 +81,7 @@ Timer::pause()
 }
 
 /**
- * @brief Timer::remove
+ * @brief Timer::stop Stop the QTimer object inside this object.
  */
 void
 Timer::stop()
@@ -98,7 +99,7 @@ Timer::stop()
 }
 
 /**
- * @brief Timer::restart
+ * @brief Timer::restart Start the QTimer object inside this object with the original time given at the start of this object creation.
  */
 void
 Timer::restart()
@@ -113,7 +114,7 @@ Timer::restart()
 }
 
 /**
- * @brief Timer::destroy
+ * @brief Timer::destroy Stop the Qtimer object inside this object.
  */
 void
 Timer::destroy()
@@ -127,8 +128,8 @@ Timer::destroy()
 }
 
 /**
- * @brief Timer::getId
- * @return
+ * @brief Timer::getId Getter.
+ * @return The id ob this object, this id is not equal to the QTimer object id.
  */
 int
 Timer::getId()
@@ -137,8 +138,18 @@ Timer::getId()
 }
 
 /**
- * @brief Timer::getRemainingTime
+ * @brief Timer::getDescription
  * @return
+ */
+QString
+Timer::getDescription()
+{
+    return m_description;
+}
+
+/**
+ * @brief Timer::getRemainingTime Getter
+ * @return Returns the remaining time of the QTimer object inside this object.
  */
 int
 Timer::getRemainingTime()

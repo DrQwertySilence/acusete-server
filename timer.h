@@ -21,13 +21,14 @@ private:
     static int idCount;
     static int getNextId();
     int m_id;
+    QString m_description;
     int m_initialTime;
     int m_remainingTime;
     QTimer* m_timer;
     int m_state;
 
 public:
-    Timer(int p_time, QObject *p_parent = nullptr);
+    Timer(int p_time, QString p_description, QObject *p_parent = nullptr);
     virtual ~Timer();
     //
     void resume();
@@ -37,6 +38,7 @@ public:
     void destroy();
 
     int getId();
+    QString getDescription();
     int getRemainingTime();
 
 private slots:

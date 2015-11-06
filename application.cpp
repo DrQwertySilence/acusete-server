@@ -1,8 +1,5 @@
 #include "application.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
-
 /**
  * @brief Application::Application
  * @param argc
@@ -10,8 +7,8 @@
  */
 Application::Application(int &argc, char **argv) :
     QCoreApplication(argc, argv),
-    m_data(new Data(this)),
     m_serialTimer(new QTimer(this)),
+    m_data(new Data(m_serialTimer, this)),
     m_serialTimerDelay(250),
     m_ppmMax(Configuration::configuration.getWarningConfiguration().value("ppm").toInt()),
     m_temperatureMin(Configuration::configuration.getWarningConfiguration().value("temperature").toDouble()),
@@ -25,18 +22,10 @@ Application::Application(int &argc, char **argv) :
     int port = serverConfig.value("port").toInt(0);
 
     if (m_webSocketServer->listen(QHostAddress::Any, port)) {
-        QObject::connect(m_webSocketServer, &QWebSocketServer::newConnection,
-                         this, &Application::onNewConnection);
-        QObject::connect(m_webSocketServer, &QWebSocketServer::closed,
-                         this, &Application::closed);
-    }
-
-    ///Signal and slot stuff
-    for (Device *device : m_data->getDevices()) {
-        QObject::connect(m_serialTimer, &QTimer::timeout,
-                         device, &Device::getData);
-        QObject::connect(device, &Device::dataReceived,
-                         this, &Application:: workOnSerialData);
+        QObject::connect(m_webSocketServer, SIGNAL(newConnection()),
+                         this, SLOT(onNewConnection()));
+        QObject::connect(m_webSocketServer, SIGNAL(closed()),
+                         this, SLOT(socketDisconnected()));
     }
 
     QObject::connect(this, &Application::timerReceived,
@@ -44,72 +33,42 @@ Application::Application(int &argc, char **argv) :
 }
 
 /**
- * @brief Application::~Application
+ * @brief Application::~Application Closes websocket server and then delete all websocket clients.
  */
 Application::~Application()
 {
+    m_webSocketServer->close();
+    qDeleteAll(m_webSocketClients.begin(), m_webSocketClients.end());
+    delete m_webSocketServer;
     delete m_data;
     delete m_serialTimer;
-
-    ///Server
-    m_webSocketServer->close();
-    delete m_webSocketServer;
-    qDeleteAll(m_webSocketClients.begin(), m_webSocketClients.end());
-}
-
-/// TODO: Should be implemented in Device Class
-/**
- * @brief Application::workOnSerialData
- */
-void
-Application::workOnSerialData()
-{
-    processSerialData(m_data->getDevices(), m_ppmMax, m_temperatureMin);
 }
 
 /**
- * @brief Application::processSerialData Check if there is anormal data. Anormal data is the one that comes from variables PPM and Temperature captures by a device that bypass the maxPPM (more than) and minTemperature (less than) values.
- * @param p_devices
- * @param p_maxPPM
- * @param p_minTemperature
- */
-void
-Application::processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p_minTemperature)
-{
-    for (Device *device : p_devices) {
-        if (device->getPPM() > p_maxPPM) {
-            for (float temperature : device->getTemperatures())
-                if (temperature < p_minTemperature)
-                    startSensorAlarm();
-        } else
-            stopSensorAlarm();
-    }
-}
-
-/**
- * @brief Application::startAlarm
+ * @brief Application::startAlarm Start given alarm.
  * @param p_alarm The alarm that is going to be started.
  */
 void
-Application::startAlarm(QSound *p_alarm)
+Application::startAlarm(QSoundEffect *p_alarm)
 {
-    if(p_alarm->isFinished())
+    if(!p_alarm->isPlaying())
         p_alarm->play();
 }
 
 /**
- * @brief Application::stopAlarm
- * @param p_alarm The alarm that is going to be stoped
+ * @brief Application::stopAlarm Stop given alarm.
+ * @param p_alarm The alarm that is going to be stopped.
  */
 void
-Application::stopAlarm(QSound * p_alarm)
+Application::stopAlarm(QSoundEffect *p_alarm)
 {
-    if(!p_alarm->isFinished())
+    if(p_alarm->isPlaying())
         p_alarm->stop();
 }
 
 /**
- * @brief Application::startTimerAlarm Start a timer (soft) alarm
+ * @brief Application::startTimerAlarm Start the (soft) alarm.
+ * @param p_state
  */
 void
 Application::startTimerAlarm()
@@ -118,7 +77,7 @@ Application::startTimerAlarm()
 }
 
 /**
- * @brief Application::stopTimerAlarm Stop a timer (soft) alarm
+ * @brief Application::stopTimerAlarm Stop the (soft) alarm.
  */
 void
 Application::stopTimerAlarm()
@@ -127,34 +86,27 @@ Application::stopTimerAlarm()
 }
 
 /**
- * @brief Application::startSensorAlarm Start a sensor (hard) alarm
+ * @brief Application::startSensorAlarm Based on a state start of stop the (strong) alarm.
+ * @param p_state The state that determine if the alarm should be started or stopped.
  */
 void
-Application::startSensorAlarm()
+Application::startSensorAlarm(int p_state)
 {
-    startAlarm(m_data->getSensorAlarm());
+    if (p_state)
+        startAlarm(m_data->getSensorAlarm());
+    else
+        stopAlarm(m_data->getSensorAlarm());
 }
 
 /**
- * @brief Application::stopSensorAlarm Stop a sensor (hard) alarm
+ * @brief Application::setTimer Creates an alarm in the data object.
+ * @param pMilliseconds The number of millisecond that the timer has to wait to activate the (soft) alarm.
  */
 void
-Application::stopSensorAlarm()
+Application::setTimer(int p_milliseconds, QString p_description)
 {
-    stopAlarm(m_data->getSensorAlarm());
+    m_data->addTimer(p_milliseconds, p_description);
 }
-
-/**
- * @brief Application::setTimer creates an alarm in a data object
- * @param pMilliseconds
- */
-void
-Application::setTimer(int pMilliseconds)
-{
-    m_data->addTimer(pMilliseconds);
-}
-
-///Websocket Server
 
 /**
  * @brief Application::onNewConnection Set the events when client interact with the server.
@@ -171,9 +123,40 @@ Application::onNewConnection()
     m_webSocketClients << pSocket;
 }
 
+/**
+ * @brief sendMessage
+ * @param p_message
+ * @param p_data Message content as a QJsonObject
+ */
+void
+Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonObject p_data)
+{
+    QJsonDocument document;
+    QJsonObject obj {
+        {"message", p_message},
+        {"msgData", p_data}
+    };
+    document.setObject(obj);
+    p_client->sendTextMessage(document.toJson(QJsonDocument::Compact));
+}
 
+/**
+ * @brief sendMessage The receiver of ther message.
+ * @param p_message The message.
+ * @param p_data Message content as a QJsonArray
+ */
+void
+Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonArray p_data)
+{
+    QJsonDocument document;
+    QJsonObject obj {
+        {"message", p_message},
+        {"msgData", p_data}
+    };
+    document.setObject(obj);
+    p_client->sendTextMessage(document.toJson(QJsonDocument::Compact));
+}
 
-/// Refactor this shit!!!
 /**
  * @brief Application::processTextMessage Do something when a client send a message to the server.
  * @param message The message received.
@@ -193,144 +176,65 @@ Application::processTextMessage(QString p_message)
             else if (words.at(1) == "stop")
                 value = 0;
 
-            QJsonDocument document;
             QJsonObject subObj {{"value", value}};
-            QJsonObject obj {
-                {"message", "alert"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+
+            sendMessage(pClient, "alert", subObj);
+
             stopTimerAlarm();
 
         } else if (command == "/setTimer") {
             if (words.size() == 1)
-                timerReceived(0);
+                timerReceived(0, "");
             else {
                 int milliseconds = words.at(1).toInt();
                 if (milliseconds < 0)
                     milliseconds = 0;
-                timerReceived(milliseconds);
+                timerReceived(milliseconds, words.at(2));
             }
 
         } else if (command == "/getTimers") {
-            QJsonArray timerArray = m_data->getFormatedTimers();
-
-            QJsonDocument document;
-            QJsonObject obj {
-                {"message", "displayTimers"},
-                {"msgData", timerArray}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "displayTimers",
+                        m_data->getFormatedTimers());
 
         } else if (command == "/getSensorData") {
-            QJsonArray devicesData = m_data->getFormatedDeviceData();
-
-            QJsonDocument document;
-            QJsonObject obj {
-                {"message", "displaySensorData"},
-                {"msgData", devicesData}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "displaySensorData",
+                        m_data->getFormatedDeviceData());
 
         } else if (command == "/getRecordedData") {
-            QJsonArray devicesRecords = m_data->getRecordedData(words.at(2).toInt(), words.at(3).toInt());
-
-            QJsonDocument document;
-            QJsonObject obj {
-                {"message", "recordedDataForGraph"},
-                {"msgData", devicesRecords}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "recordedDataForGraph",
+                        m_data->getRecordedData(words.at(2).toInt(), words.at(3).toInt()));
 
         } else if (command == "/resumeTimer") {
             m_data->getTimerById(words.at(1).toInt())->resume();
-
-            QJsonDocument document;
             QJsonObject subObj {{"id", words.at(1).toInt()}};
-            QJsonObject obj {
-                {"message", "timerResumed"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "timerResumed",subObj);
 
         } else if (command == "/pauseTimer") {
             m_data->getTimerById(words.at(1).toInt())->pause();
-
-            QJsonDocument document;
             QJsonObject subObj {{"id", words.at(1).toInt()}};
-            QJsonObject obj {
-                {"message", "timerPaused"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "timerPaused", subObj);
 
         } else if (command == "/stopTimer") {
             m_data->getTimerById(words.at(1).toInt())->stop();
-
-            QJsonDocument document;
             QJsonObject subObj {{"id", words.at(1).toInt()}};
-            QJsonObject obj {
-                {"message", "timerStopped"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "timerStopped", subObj);
 
         } else if (command == "/restartTimer") {
             m_data->getTimerById(words.at(1).toInt())->restart();
-
-            QJsonDocument document;
             QJsonObject subObj {{"id", words.at(1).toInt()}};
-            QJsonObject obj {
-                {"message", "timerRestarted"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "timerRestarted", subObj);
 
         } else if (command == "/destroyTimer") {
             m_data->getTimerById(words.at(1).toInt())->destroy();
-
-            QJsonDocument document;
             QJsonObject subObj {{"id", words.at(1).toInt()}};
-            QJsonObject obj {
-                {"message", "timerDestroyed"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
-
-        } else if (command == "/test_json") {
-            QJsonDocument document;
-            QJsonObject subObj {{"value", 1}};
-            QJsonObject obj {
-                {"message", "alert"},
-                {"msgData", subObj}
-            };
-            document.setObject(obj);
-
-            pClient->sendTextMessage(document.toJson(QJsonDocument::Compact));
+            sendMessage(pClient, "timerDestroyed", subObj);
         }
     }
 }
 
 /**
- * @brief Application::processBinaryMessage Not used: should be more efficient than working with string
- * @param message Binary menssage received
+ * @brief Application::processBinaryMessage Not used: should be more efficient than working with strings
+ * @param message Binary message received
  */
 void
 Application::processBinaryMessage(QByteArray p_message)
@@ -342,7 +246,7 @@ Application::processBinaryMessage(QByteArray p_message)
 }
 
 /**
- * @brief Application::socketDisconnected
+ * @brief Application::socketDisconnected Kill all client connections to the server.
  */
 void
 Application::socketDisconnected()

@@ -49,7 +49,7 @@ const QString getDatabaseLocation()
 
 /**
  * @brief getDatabaseName
- * @return
+ * @return The name of the database.
  */
 const QString getDatabaseName()
 {
@@ -57,11 +57,11 @@ const QString getDatabaseName()
 }
 
 /**
- * @brief getRegisteredDataByDevice
- * @param p_deviceID
- * @param p_initialDate
- * @param p_finalDate
- * @return
+ * @brief getRegisteredDataByDevice Get data from the application database.
+ * @param p_deviceID Device id.
+ * @param p_initialDate First date to look for record.
+ * @param p_finalDate Last date to look for record.
+ * @return Returns a QJson with all the data of the records found.
  */
 QJsonObject
 getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate)
@@ -114,12 +114,12 @@ getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate
 }
 
 /**
- * @brief recordDeviceData
- * @param p_query
- * @param p_deviceId
- * @param p_time
- * @param p_ppm
- * @return
+ * @brief recordDeviceData Helper funtion. Bind values to a query and executes it.
+ * @param p_query The query.
+ * @param p_deviceId The id of Device.
+ * @param p_time The time when the data was captured by Device.
+ * @param p_ppm The ppm captured by Device.
+ * @return Returns the id of the record registered by this functon.
  */
 QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 p_time, qint64 &p_ppm)
 {
@@ -131,10 +131,10 @@ QVariant recordDeviceData(QSqlQuery &p_query, QString &p_deviceId, qint64 p_time
 }
 
 /**
- * @brief recordTemperature
- * @param p_query
- * @param p_registerId
- * @param p_temperature
+ * @brief recordTemperature Helper function. Bind values to a query and executes t.
+ * @param p_query The query.
+ * @param p_registerId Id given by the database  when recordDeviceData is executed.
+ * @param p_temperature The temperature that is going to be registered.
  */
 void recordTemperature(QSqlQuery &p_query, QVariant &p_registerId, float &p_temperature)
 {
@@ -144,10 +144,10 @@ void recordTemperature(QSqlQuery &p_query, QVariant &p_registerId, float &p_temp
 }
 
 /**
- * @brief recordData
- * @param p_deviceId
- * @param p_ppm
- * @param p_temperatures
+ * @brief recordData Store given data (from a Device) to the application database.
+ * @param p_deviceId Device id.
+ * @param p_ppm Ppm registered by Device.
+ * @param p_temperatures Temperatures registered by Device.
  * @return
  */
 QSqlError recordData(QString p_deviceId, qint64 p_ppm, QVector<float> p_temperatures)

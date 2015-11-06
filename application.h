@@ -15,38 +15,35 @@ class Application : public QCoreApplication
 {
     Q_OBJECT
 private:
+    QTimer *m_serialTimer;
     Data *m_data;
-    QTimer *m_serialTimer; // Interval of time that the program waits to process received data
     int m_serialTimerDelay;
     int m_ppmMax;
     double m_temperatureMin;
-    /// Websocket Server
+
     QWebSocketServer *m_webSocketServer;
     QList<QWebSocket*> m_webSocketClients;
-    /// Serial Data
-    void processSerialData(QVector<Device*> p_devices, int p_maxPPM, float p_minTemperature);
+
+    void sendMessage(QWebSocket *p_client, QString p_message, QJsonObject p_data);
+    void sendMessage(QWebSocket *p_client, QString p_message, QJsonArray p_data);
 
 signals:
-    ///Server
-    void closed();
-    void timerReceived(int pMilliseconds);
+    void timerReceived(int p_milliseconds, QString p_description);
+
 private slots:
-    ///Server
     void onNewConnection();
-    void processTextMessage(QString message);
-    void processBinaryMessage(QByteArray message);
+    void processTextMessage(QString p_message);
+    void processBinaryMessage(QByteArray p_message);
     void socketDisconnected();
 
-    void startAlarm(QSound *p_alarm);
-    void stopAlarm(QSound *p_alarm);
+    void startAlarm(QSoundEffect *p_alarm);
+    void stopAlarm(QSoundEffect *p_alarm);
 
 public slots:
-    void workOnSerialData();
-    void startSensorAlarm();
-    void stopSensorAlarm();
+    void startSensorAlarm(int p_state);
     void startTimerAlarm();
     void stopTimerAlarm();
-    void setTimer(int pMilliseconds);
+    void setTimer(int p_milliseconds, QString p_description);
 
 public:
     Application(int &argc, char **argv);

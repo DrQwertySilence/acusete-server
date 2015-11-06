@@ -12,25 +12,31 @@ class Device : public QObject
 private:
     QSerialPort *m_serialPort;
     QString m_id;
-    QByteArray *m_dataByteArray; // Where data from serial is temporaly stored
-    int m_maxArraySize; // Max size of the buffer
+    QByteArray *m_dataByteArray;
+    int m_maxArraySize;
+
     int m_ppm;
+    int m_ppmMax;
+
     QVector<float> m_temperatures;
+    double m_temperatureMin;
 
 signals:
     void dataReceived();
+    void dataChecked(int p_state);
 
 public slots:
     void getData();
+    void checkData();
 
 public:
-    Device(QString pPort, QSerialPort::BaudRate pBaudRate);
+    Device(QString p_id, QString p_port, QSerialPort::BaudRate p_baudRate, int p_ppmMax, double p_temperatureMin);
     virtual ~Device();
 
     int getPPM();
     QVector<float> getTemperatures();
     QString getId();
-    // SQL stuff
+
     void recordAllData();
 };
 

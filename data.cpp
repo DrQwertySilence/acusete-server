@@ -7,23 +7,36 @@
 
 /**
  * @brief Data::Data
- * @param pParent
+ * @param p_serialTimer
+ * @param p_Parent
  */
-Data::Data(QObject *pParent) :
-    QObject(pParent),
-    m_sensorAlarm(new QSound(Configuration::configuration.getSoundonConfiguration().value("strongAlarm").toString())),
-    m_timerAlarm(new QSound(Configuration::configuration.getSoundonConfiguration().value("softAlarm").toString()))
+Data::Data(QTimer* p_serialTimer, QObject *p_Parent) :
+    QObject(p_Parent),
+    m_sensorAlarm(new QSoundEffect(this)),
+    m_timerAlarm(new QSoundEffect(this))
 {
-    /// Alarm configuration
-    m_sensorAlarm->setLoops(-1);
-    m_timerAlarm->setLoops(-1);
+    // Alarm configuration
+    m_sensorAlarm->setSource(QUrl::fromLocalFile(Configuration::configuration.getSoundConfiguration().value("strongAlarm").toString()));
+    m_sensorAlarm->setLoopCount(QSoundEffect::Infinite);
+    m_timerAlarm->setSource(QUrl::fromLocalFile(Configuration::configuration.getSoundConfiguration().value("softAlarm").toString()));
+    m_timerAlarm->setLoopCount(QSoundEffect::Infinite);
 
-    ///Serial port and baud rate configuration
-    initDevices(Configuration::configuration.getDevicesConfiguration());
+    //Serial port and baud rate configuration
+    QList<QJsonObject> deviceList = Configuration::configuration.getDevicesConfiguration();
+    for (QJsonObject device : deviceList) {
+        Device* dev = initDevices(device);
+        m_devices.push_back(dev);
+        QObject::connect(p_serialTimer, SIGNAL(timeout()),
+                         dev, SLOT(getData()));
+        QObject::connect(p_serialTimer, SIGNAL(timeout()),
+                         dev, SLOT(checkData()));
+        QObject::connect(dev, SIGNAL(dataChecked(int)),
+                         (Application*)parent(), SLOT(startSensorAlarm(int)));
+    }
 }
 
 /**
- * @brief Data::~Data
+ * @brief Data::~Data Destroy the alarms, every device and timers that haven't finish.
  */
 Data::~Data()
 {
@@ -42,49 +55,54 @@ Data::~Data()
 }
 
 /**
- * @brief Data::initDevices
- * @param p_configuration
+ * @brief Data::initDevices Create device objects based on a configuration file content.
+ * @param p_configuration The json object that containt the configuration.
  */
-void
+Device*
 Data::initDevices(QJsonObject p_configuration)
 {
-    QSerialPort::BaudRate baudRate;
+    QSerialPort::BaudRate device_baud_rate;
     int baudRateInt = p_configuration.value("baudRate").toInt();
     switch (baudRateInt) {
     case 1200:
-        baudRate = QSerialPort::BaudRate::Baud1200;
+        device_baud_rate = QSerialPort::BaudRate::Baud1200;
         break;
     case 2400:
-        baudRate = QSerialPort::BaudRate::Baud2400;
+        device_baud_rate = QSerialPort::BaudRate::Baud2400;
         break;
     case 4800:
-        baudRate = QSerialPort::BaudRate::Baud4800;
+        device_baud_rate = QSerialPort::BaudRate::Baud4800;
         break;
     case 9600:
-        baudRate = QSerialPort::BaudRate::Baud9600;
+        device_baud_rate = QSerialPort::BaudRate::Baud9600;
         break;
     case 19200:
-        baudRate = QSerialPort::BaudRate::Baud19200;
+        device_baud_rate = QSerialPort::BaudRate::Baud19200;
         break;
     case 38400:
-        baudRate = QSerialPort::BaudRate::Baud38400;
+        device_baud_rate = QSerialPort::BaudRate::Baud38400;
         break;
     case 57600:
-        baudRate = QSerialPort::BaudRate::Baud57600;
+        device_baud_rate = QSerialPort::BaudRate::Baud57600;
         break;
     case 115200:
-        baudRate = QSerialPort::BaudRate::Baud115200;
+        device_baud_rate = QSerialPort::BaudRate::Baud115200;
         break;
     default:
-        baudRate = QSerialPort::BaudRate::UnknownBaud;
+        device_baud_rate = QSerialPort::BaudRate::UnknownBaud;
     }
 
-    m_devices.push_back(new Device(p_configuration.value("port").toString(), baudRate));
+    Device* dev = new Device(p_configuration.value("id").toString(),
+                             p_configuration.value("port").toString(),
+                             device_baud_rate,
+                             p_configuration.value("ppm").toInt(),
+                             p_configuration.value("temperature").toDouble());
+    return dev;
 }
 
 /**
- * @brief Data::getDevices
- * @return
+ * @brief Data::getDevices Getter.
+ * @return Returns all the devices.
  */
 QVector<Device*>
 Data::getDevices()
@@ -96,7 +114,7 @@ Data::getDevices()
  * @brief Data::getTimerAlarm
  * @return
  */
-QSound*
+QSoundEffect*
 Data::getTimerAlarm()
 {
     return m_timerAlarm;
@@ -106,7 +124,7 @@ Data::getTimerAlarm()
  * @brief Data::getSensorAlarm
  * @return
  */
-QSound*
+QSoundEffect*
 Data::getSensorAlarm()
 {
     return m_sensorAlarm;
@@ -117,9 +135,9 @@ Data::getSensorAlarm()
  * @param p_milliseconds
  */
 void
-Data::addTimer(int p_milliseconds)
+Data::addTimer(int p_milliseconds, QString p_description)
 {
-    Timer *timer = new Timer(p_milliseconds, this);
+    Timer *timer = new Timer(p_milliseconds, p_description, this);
     m_timers.push_back(timer);
 
     connect(timer, &Timer::removed,
@@ -170,7 +188,8 @@ Data::getFormatedTimers()
     for (auto timer : this->m_timers) {
         QJsonObject jsonTimer {
             {"ID", timer->getId()},
-            {"remainingTime", (timer->getRemainingTime())}
+            {"description", timer->getDescription()},
+            {"remainingTime", timer->getRemainingTime()}
         };
         timers.append(jsonTimer);
     }

@@ -3,16 +3,21 @@
 #include "database.h"
 
 /**
- * @brief Device::Device
- * @param p_port
- * @param p_baudRate
+ * @brief Device::Device Constructor.
+ * @param p_id The identifier that a user give to this device.
+ * @param p_port The serial port that the application looks to connect to this device.
+ * @param p_baudRate The frequency at what this application should read device data.
+ * @param p_ppmMax Warning parameter.
+ * @param p_temperatureMin Warning parameter.
  */
-Device::Device(QString p_port, QSerialPort::BaudRate p_baudRate):
+Device::Device(QString p_id, QString p_port, QSerialPort::BaudRate p_baudRate, int p_ppmMax, double p_temperatureMin):
     m_serialPort(new QSerialPort()),
-    m_id("Derp"),
+    m_id(p_id),
     m_dataByteArray(new QByteArray()),
     m_maxArraySize(10),
-    m_ppm(0)
+    m_ppm(0),
+    m_ppmMax(p_ppmMax),
+    m_temperatureMin(p_temperatureMin)
 {
     m_serialPort->setBaudRate(p_baudRate);
     m_serialPort->setPortName(p_port);
@@ -37,8 +42,25 @@ Device::~Device()
 }
 
 /**
- * @brief Device::getPPM
- * @return
+ * @brief Device::checkData Check if the data that this device have captured is under the warning parameters
+ */
+void
+Device::checkData()
+{
+    if (m_ppm < m_ppmMax)
+        dataChecked(0);
+    else {
+        for (float temperature : m_temperatures)
+            if (temperature < m_temperatureMin) {
+                dataChecked(1);
+                return;
+            }
+    }
+}
+
+/**
+ * @brief Device::getPPM Getter.
+ * @return Return the ppm value captured by this device.
  */
 int
 Device::getPPM()
@@ -47,8 +69,8 @@ Device::getPPM()
 }
 
 /**
- * @brief Device::getTemperatures
- * @return
+ * @brief Device::getTemperatures Getter.
+ * @return Return the list of temperatures captured by this device.
  */
 QVector<float>
 Device::getTemperatures()
@@ -57,8 +79,8 @@ Device::getTemperatures()
 }
 
 /**
- * @brief Device::getId
- * @return
+ * @brief Device::getId Getter.
+ * @return Returns the id of this device.
  */
 QString
 Device::getId()
@@ -101,7 +123,7 @@ Device::getData()
 }
 
 /**
- * @brief Device::recordAllData
+ * @brief Device::recordAllData Stored the data registered by this device in the application database.
  */
 void
 Device::recordAllData()

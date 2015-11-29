@@ -21,7 +21,7 @@ Timer::getNextId()
 /**
  * @brief Timer::Timer Works as a wrapper for QTimer class.
  * @param p_time Amount of time until the timer finish
- * @param p_parent QObject parent.
+ * @param p_parent Parent QObject.
  */
 Timer::Timer(int p_time, QString p_description, QObject *p_parent) :
     QObject(p_parent),
@@ -31,10 +31,10 @@ Timer::Timer(int p_time, QString p_description, QObject *p_parent) :
     m_remainingTime(p_time),
     m_timer(new QTimer(this))
 {
-    connect(m_timer, &QTimer::timeout,
-            (Application*)this->parent()->parent(), &Application::startTimerAlarm);
-    connect(m_timer, &QTimer::timeout,
-            this, &Timer::ontimeout);
+    connect(m_timer, SIGNAL(timeout()),
+            (Application*)this->parent()->parent(), SLOT(startTimerAlarm()));
+    connect(m_timer, SIGNAL(timeout()),
+            this, SLOT(ontimeout()));
 
     m_timer->setSingleShot(true);
     m_timer->start(p_time);
@@ -58,14 +58,14 @@ Timer::resume()
     if (m_timer == nullptr)
         m_timer = new QTimer();
     m_timer->start(m_remainingTime);
-    //
+
     m_state = TIMER_STATE::COUNTING;
-    //
+
     resumed();
 }
 
 /**
- * @brief Timer::pause Pause the QTimer object inside this object.
+ * @brief Timer::pause Pauses the QTimer object inside this object.
  */
 void
 Timer::pause()
@@ -74,9 +74,9 @@ Timer::pause()
         m_remainingTime = m_timer->remainingTime();
         m_timer->stop();
     }
-    //
+
     m_state = TIMER_STATE::PAUSED;
-    //
+
     paused();
 }
 
@@ -92,9 +92,9 @@ Timer::stop()
         m_remainingTime = i;
 
     m_timer->stop();
-    //
+
     m_state = TIMER_STATE::STOPPED;
-    //
+
     stopped();
 }
 
@@ -107,9 +107,9 @@ Timer::restart()
     delete m_timer;
     m_timer = new QTimer();
     m_timer->start(m_initialTime);
-    //
+
     m_state = TIMER_STATE::COUNTING;
-    //
+
     restarted();
 }
 
@@ -120,9 +120,9 @@ void
 Timer::destroy()
 {
     destroyed();
-    //
+
     m_state = TIMER_STATE::DESTROYED;
-    //
+
     ((Data *)parent())->destroyTimerById(m_id);
 //    delete this;
 }
@@ -138,8 +138,8 @@ Timer::getId()
 }
 
 /**
- * @brief Timer::getDescription
- * @return
+ * @brief Timer::getDescription Gets the description given to the timer.
+ * @return Return the description of the timer.
  */
 QString
 Timer::getDescription()

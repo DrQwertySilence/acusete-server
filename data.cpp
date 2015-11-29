@@ -6,9 +6,9 @@
 #include <QJsonObject>
 
 /**
- * @brief Data::Data
- * @param p_serialTimer
- * @param p_Parent
+ * @brief Data::Data Constructor.
+ * @param p_serialTimer Timer that represents the frecuenzy at what the application works.
+ * @param p_Parent Parent QObject.
  */
 Data::Data(QTimer* p_serialTimer, QObject *p_Parent) :
     QObject(p_Parent),
@@ -111,8 +111,8 @@ Data::getDevices()
 }
 
 /**
- * @brief Data::getTimerAlarm
- * @return
+ * @brief Data::getTimerAlarm Getter.
+ * @return Returns the timer alarm.
  */
 QSoundEffect*
 Data::getTimerAlarm()
@@ -121,8 +121,8 @@ Data::getTimerAlarm()
 }
 
 /**
- * @brief Data::getSensorAlarm
- * @return
+ * @brief Data::getSensorAlarm Getter.
+ * @return Returns the sensor alarm.
  */
 QSoundEffect*
 Data::getSensorAlarm()
@@ -131,8 +131,9 @@ Data::getSensorAlarm()
 }
 
 /**
- * @brief Data::addTimer
- * @param p_milliseconds
+ * @brief Data::addTimer Adds a timer to the application.
+ * @param p_milliseconds Cuantity of milliseconds until the timer expires.
+ * @param p_description Description given to the timer.
  */
 void
 Data::addTimer(int p_milliseconds, QString p_description)
@@ -145,9 +146,9 @@ Data::addTimer(int p_milliseconds, QString p_description)
 }
 
 /**
- * @brief Data::getTimerById
- * @param p_id
- * @return
+ * @brief Data::getTimerById Getter.
+ * @param p_id The id of the timer.
+ * @return Returns the timer that match the id.
  */
 Timer*
 Data::getTimerById(int p_id)
@@ -159,8 +160,8 @@ Data::getTimerById(int p_id)
 }
 
 /**
- * @brief Data::destroyTimerById
- * @param p_id
+ * @brief Data::destroyTimerById Destroy a timer by id.
+ * @param p_id The id of the timer to be destroyed.
  */
 void
 Data::destroyTimerById(int p_id)
@@ -178,8 +179,8 @@ Data::destroyTimerById(int p_id)
 }
 
 /**
- * @brief Data::getFormatedTimers
- * @return
+ * @brief Data::getFormatedTimers Get all the timers as an QJsonArray.
+ * @return Returns a list of all timers as a json array.
  */
 QJsonArray
 Data::getFormatedTimers()
@@ -197,8 +198,8 @@ Data::getFormatedTimers()
 }
 
 /**
- * @brief Data::getFormatedDeviceData
- * @return
+ * @brief Data::getFormatedDeviceData Get devices loaded into the applicatión.
+ * @return Returns a list of devices as a QJsonArray.
  */
 QJsonArray
 Data::getFormatedDeviceData()
@@ -225,10 +226,10 @@ Data::getFormatedDeviceData()
 }
 
 /**
- * @brief Device::getRecordedData
- * @param p_initialDate
- * @param p_finalDate
- * @return
+ * @brief Device::getRecordedData Get all the records from the database from a period of time.
+ * @param p_initialDate Initial date of a period of time as timestamp.
+ * @param p_finalDate Final date of a period of time as timestamp.
+ * @return Returns the recorded data as a QJsonArray.
  */
 QJsonArray
 Data::getRecordedData(int p_initialDate, int p_finalDate)
@@ -241,8 +242,8 @@ Data::getRecordedData(int p_initialDate, int p_finalDate)
 }
 
 /**
- * @brief Data::removeTimer
- * @param p_timer
+ * @brief Data::removeTimer Remove a timer from the timer array.
+ * @param p_timer The timer that is going to be removed.
  */
 void
 Data::removeTimer(Timer *p_timer)

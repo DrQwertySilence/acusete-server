@@ -7,11 +7,11 @@
 
 #include <QJsonObject>
 
+
 class Configuration
 {
 private:
     QJsonObject m_serverConfiguration;
-    QJsonObject m_devicesConfiguration_OLD;
     QJsonObject m_warningConfiguration;
     QJsonObject m_soundConfiguration;
 

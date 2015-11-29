@@ -36,7 +36,6 @@ public:
     int getPPM();
     QVector<float> getTemperatures();
     QString getId();
-
     void recordAllData();
 };
 

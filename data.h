@@ -3,7 +3,7 @@
 
 #include "timer.h"
 
-//#include <QObject>
+#include <QObject>
 #include <QSoundEffect>
 #include <QSound>
 #include <QJsonDocument>
@@ -20,8 +20,6 @@ class Data : public QObject
 {
     Q_OBJECT
 private:
-//    QSound *m_sensorAlarm;
-//    QSound *m_timerAlarm;
     QSoundEffect *m_sensorAlarm;
     QSoundEffect *m_timerAlarm;
     QVector<Device*> m_devices;
@@ -35,8 +33,6 @@ private slots:
 public:
     Data(QTimer* p_serialTimer, QObject *pParant = nullptr);
     virtual ~Data();
-
-    void addTimer(int p_milliseconds, QString p_description);
     QVector<Device*> getDevices();
     Timer* getTimerById(int p_id);
     void destroyTimerById(int p_id);
@@ -45,6 +41,9 @@ public:
     QJsonArray getFormatedTimers();
     QJsonArray getFormatedDeviceData();
     QJsonArray getRecordedData(int p_initialDate, int p_finalDate);
+
+public slots:
+    void addTimer(int p_milliseconds, QString p_description);
 };
 
 #endif // DATA_H

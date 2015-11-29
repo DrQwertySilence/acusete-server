@@ -31,7 +31,7 @@ Device::Device(QString p_id, QString p_port, QSerialPort::BaudRate p_baudRate, i
 }
 
 /**
- * @brief Device::~Device
+ * @brief Device::~Device Closes the serial port and deletes it.
  */
 Device::~Device()
 {
@@ -53,6 +53,9 @@ Device::checkData()
         for (float temperature : m_temperatures)
             if (temperature < m_temperatureMin) {
                 dataChecked(1);
+
+                recordAllData();
+
                 return;
             }
     }
@@ -60,7 +63,7 @@ Device::checkData()
 
 /**
  * @brief Device::getPPM Getter.
- * @return Return the ppm value captured by this device.
+ * @return Returns the ppm value captured by this device.
  */
 int
 Device::getPPM()
@@ -70,7 +73,7 @@ Device::getPPM()
 
 /**
  * @brief Device::getTemperatures Getter.
- * @return Return the list of temperatures captured by this device.
+ * @return Returns the list of temperatures captured by this device.
  */
 QVector<float>
 Device::getTemperatures()
@@ -89,17 +92,17 @@ Device::getId()
 }
 
 /**
- * @brief Device::getData Get sensor data from arduino device
+ * @brief Device::getData Gets sensor data from arduino device
  */
 void
 Device::getData()
 {
-    //    (*m_dataByteArray).append(m_serialPort->readAll());
+//    (*m_dataByteArray).append(m_serialPort->readAll());
     int size = m_serialPort->bytesAvailable();
     if (size >= m_maxArraySize * 3) {
 //        m_dataByteArray->append(m_serialPort->read(m_maxArraySize * 3));
         m_dataByteArray->append(m_serialPort->readAll());
-        //
+
         QString _test(*m_dataByteArray);
 
         QStringList _test_list = _test.split('\n');
@@ -118,12 +121,12 @@ Device::getData()
         m_dataByteArray->clear();
         dataReceived();
 
-        recordAllData();
+//        recordAllData();
     }
 }
 
 /**
- * @brief Device::recordAllData Stored the data registered by this device in the application database.
+ * @brief Device::recordAllData Stores the data registered by this device in the application database.
  */
 void
 Device::recordAllData()

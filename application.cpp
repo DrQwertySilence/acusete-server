@@ -1,15 +1,15 @@
 #include "application.h"
 
 /**
- * @brief Application::Application
- * @param argc
- * @param argv
+ * @brief Application::Application Constructor
+ * @param argc Number of arguments given at application start.
+ * @param argv Value of each argument given at application start.
  */
 Application::Application(int &argc, char **argv) :
     QCoreApplication(argc, argv),
     m_serialTimer(new QTimer(this)),
     m_data(new Data(m_serialTimer, this)),
-    m_serialTimerDelay(250),
+    m_serialTimerDelay(1000),
     m_ppmMax(Configuration::configuration.getWarningConfiguration().value("ppm").toInt()),
     m_temperatureMin(Configuration::configuration.getWarningConfiguration().value("temperature").toDouble()),
     /// Server
@@ -28,8 +28,8 @@ Application::Application(int &argc, char **argv) :
                          this, SLOT(socketDisconnected()));
     }
 
-    QObject::connect(this, &Application::timerReceived,
-                     this, &Application::setTimer);
+    QObject::connect(this, SIGNAL(timerReceived(int,QString)),
+                     m_data, SLOT(addTimer(int,QString)));
 }
 
 /**
@@ -68,7 +68,6 @@ Application::stopAlarm(QSoundEffect *p_alarm)
 
 /**
  * @brief Application::startTimerAlarm Start the (soft) alarm.
- * @param p_state
  */
 void
 Application::startTimerAlarm()
@@ -99,16 +98,6 @@ Application::startSensorAlarm(int p_state)
 }
 
 /**
- * @brief Application::setTimer Creates an alarm in the data object.
- * @param pMilliseconds The number of millisecond that the timer has to wait to activate the (soft) alarm.
- */
-void
-Application::setTimer(int p_milliseconds, QString p_description)
-{
-    m_data->addTimer(p_milliseconds, p_description);
-}
-
-/**
  * @brief Application::onNewConnection Set the events when client interact with the server.
  */
 void
@@ -124,9 +113,9 @@ Application::onNewConnection()
 }
 
 /**
- * @brief sendMessage
- * @param p_message
- * @param p_data Message content as a QJsonObject
+ * @brief sendMessage Send a message to a client via websocket.
+ * @param p_message The type of message. Depending of the content of this variable the client do something with the data.
+ * @param p_data Message content as a QJsonObject.
  */
 void
 Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonObject p_data)
@@ -141,8 +130,8 @@ Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonObject p_
 }
 
 /**
- * @brief sendMessage The receiver of ther message.
- * @param p_message The message.
+ * @brief sendMessage Send a message to a client via websocket.
+ * @param p_message The type of message. Depending of the content of this variable the client do something with the data.
  * @param p_data Message content as a QJsonArray
  */
 void

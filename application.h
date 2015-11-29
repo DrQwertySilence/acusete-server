@@ -11,6 +11,9 @@
 #include "data.h"
 #include "configuration.h"
 
+/**
+ * @brief The Application class The main class of this application. Represent the application itself.
+ */
 class Application : public QCoreApplication
 {
     Q_OBJECT
@@ -43,7 +46,6 @@ public slots:
     void startSensorAlarm(int p_state);
     void startTimerAlarm();
     void stopTimerAlarm();
-    void setTimer(int p_milliseconds, QString p_description);
 
 public:
     Application(int &argc, char **argv);

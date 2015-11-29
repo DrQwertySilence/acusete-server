@@ -30,7 +30,7 @@ bool checkTableExistence(QSqlDatabase p_database, QStringList p_tables)
 }
 
 /**
- * @brief getSQLDriver
+ * @brief getSQLDriver Convenient method to get the SQL Driver string.
  * @return The name of the SQL driver
  */
 const QString getSQLDriver()
@@ -39,7 +39,7 @@ const QString getSQLDriver()
 }
 
 /**
- * @brief getDatabaseLocation
+ * @brief getDatabaseLocation Get the database location file path.
  * @return The physical location of the SQL database.
  */
 const QString getDatabaseLocation()
@@ -48,7 +48,7 @@ const QString getDatabaseLocation()
 }
 
 /**
- * @brief getDatabaseName
+ * @brief getDatabaseName Get the database name string.
  * @return The name of the database.
  */
 const QString getDatabaseName()
@@ -77,7 +77,8 @@ getRegisteredDataByDevice(QString p_deviceID, int p_initialDate, int p_finalDate
     deviceRecord.insert("ID", p_deviceID);
 
     QSqlQuery query = QSqlQuery(database);
-    query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? and rowid % 10 = 0 order by date");
+    query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? order by date");
+//    query.prepare("select * from datarecord where device = ? and date >= ? and date <= ? and rowid % 10 = 0 order by date");
     query.addBindValue(p_deviceID);
     query.addBindValue(p_initialDate);
     query.addBindValue(p_finalDate);

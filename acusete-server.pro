@@ -1,8 +1,9 @@
 TEMPLATE = app
 QT += core serialport websockets multimedia sql
 QT -= gui
-CONFIG -= app_bundle
-CONFIG += c++11 console
+#CONFIG -= app_bundle
+#CONFIG += c++11 console
+CONFIG += c++11
 
 SOURCES += \
 main.cpp \

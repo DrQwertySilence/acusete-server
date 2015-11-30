@@ -123,7 +123,7 @@ Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonObject p_
     QJsonDocument document;
     QJsonObject obj {
         {"message", p_message},
-        {"msgData", p_data}
+        {"data", p_data}
     };
     document.setObject(obj);
     p_client->sendTextMessage(document.toJson(QJsonDocument::Compact));
@@ -140,7 +140,7 @@ Application::sendMessage(QWebSocket *p_client, QString p_message, QJsonArray p_d
     QJsonDocument document;
     QJsonObject obj {
         {"message", p_message},
-        {"msgData", p_data}
+        {"data", p_data}
     };
     document.setObject(obj);
     p_client->sendTextMessage(document.toJson(QJsonDocument::Compact));
